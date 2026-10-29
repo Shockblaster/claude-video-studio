@@ -1,0 +1,17 @@
+{
+  "voice": "af_heart",
+  "speed": 1.0,
+  "brand": "ACME NOTES",
+  "url": "app.acme-notes.example",
+  "say": { "PDF": "P D F", "AI": "A.I." },
+  "chapters": [
+    { "id": "intro", "label": "Start here", "color": "#6b3f73" },
+    { "id": "write", "label": "1. Write a note", "color": "#2f8f5b" }
+  ],
+  "scenes": [
+    { "id": "s01", "chapter": "intro", "title": "Your first note",
+      "lines": ["This is a quick guide to Acme Notes.", "In one minute, you will write a note and share it."] },
+    { "id": "s02", "chapter": "write", "title": "Write a note",
+      "lines": ["Every note you have is in this list, newest first.", "To start, press New note.", "Give it a title, then press Save."] }
+  ]
+}

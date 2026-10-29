@@ -1,0 +1,56 @@
+# QC gate
+
+A video goes to the user only after this passes. Measured checks first, then eyes.
+
+## 1. Measured
+```
+npx hyperframes check --json                       # 0 errors, every warning weighed
+python -I scripts/qc_reel.py out.mp4 --sheet qc.png --frames 8
+```
+`qc_reel.py` must print `"pass": true`: 1080x1920, 30/60 fps, h264, yuv420p, AAC, length in
+range, -16..-13 LUFS, true peak <= -1 dBTP, frame 0 not black. Optional extras:
+mcp-video `sound_qa_loudness`, `video_quality_check`, `shorts_review`,
+`video_hook_candidates`.
+
+Pace (added 2026-10-29, from the MAKINGAIDOIT Free Reel Kit):
+`python -I scripts/pace_check.py out.mp4 --mask <avatar box> --mask <caption box>`.
+- Rule: something behind the avatar changes at least every second, and the first 2 s never
+  sit still. Each listed stretch gets a pop, a count, a zoom or a camera move, or is confirmed
+  as a deliberate hold (a disclaimer, a key number left to land).
+- Example from a real 80 s reel: 17 stretches over 1 s, including the hook's first ~1.2 s and two
+  2.4-2.9 s holds. Each next video should beat its predecessor's number.
+
+Avatar mouth: a new face rig must print `"lip_seal_ok": true`. READ its `mouth_zoom.png`: the
+lips meet at both corners in all 9 shapes, with no skin strip between them.
+
+## 2. Look (READ the images, do not just generate them)
+- `qc.png` contact sheet: every word and face inside the green safe box? Nothing
+  important in the tinted bands?
+- Frame 0 and the first 3 s (`npx hyperframes snapshot --range 0,3 --frames 7`): hook
+  visual and text there at frame 0?
+- `npx hyperframes snapshot --review`: read `review-beats.jpg`, the seam strips around
+  every cut and `review-phone.jpg` (360 px wide, the legibility test).
+- The climax: build frames and the release frame; the number readable for 0.5 s+?
+- Captions: never over a face or the avatar's mouth; key word highlighted; no orphan
+  single words.
+- Hindi: conjuncts and matras render correctly (Mukta or Noto Sans Devanagari loaded via
+  `@font-face`); no tofu boxes.
+- 3D / WebGL frames look right in the actual render (code can look fine and render wrong).
+- AI b-roll: watermark gone (crop sheet read), no garbled text, no uncanny faces.
+- Last frame to first frame: does the loop seam read as continuous?
+- Not just defects: look for clutter. Is anything busy sitting behind the presenter? Is any hand or prop
+  cut at the frame or box edge? (A reviewer caught both on a real reel after the defect checks had
+  passed.)
+
+## 3. Facts and rights
+- Every on-screen number and claim is in `sources.md` with a link, or labelled
+  illustrative.
+- Every music track, SFX pack, font, image and clip is in `licences.md`.
+- Brand pack compliance items done (disclaimer slot, banned phrases).
+
+## 4. Self-score (from `retention.md` section 9)
+Score 1-5 each; anything under 4 gets fixed or explained to the user.
+
+## 5. Phone review
+The user watches the draft on a phone before the delivery render. Their notes go into
+`lessons.md` in their own words.

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pick by Ear</title>
+<style>
+  :root { --bg:#f6f3ee; --card:#fff; --ink:#14213d; --muted:#5c6475; --gold:#c9962b; --line:#e4ddd1; --sel:#fff6e3; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 system-ui, "Segoe UI", sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 120px; }
+  h1 { font-size:24px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 24px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:16px; }
+  h2 { font-size:18px; margin:0 0 4px; }
+  .note { color:var(--muted); font-size:14px; margin:0 0 12px; }
+  label.opt { display:grid; grid-template-columns:24px 1fr; gap:4px 10px; align-items:center; padding:10px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; cursor:pointer; }
+  label.opt:has(input:checked) { background:var(--sel); border-color:var(--gold); }
+  label.opt input { accent-color:var(--gold); width:18px; height:18px; }
+  .txt b { font-weight:650; }
+  .txt small { color:var(--muted); display:block; }
+  audio { grid-column:2; width:100%; height:36px; }
+  .own { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  .bar { position:fixed; left:0; right:0; bottom:0; background:var(--ink); color:#fff; padding:12px 16px; }
+  .bar .in { max-width:760px; margin:0 auto; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  #summary { flex:1; min-width:200px; font-size:14px; }
+  button { background:var(--gold); color:#14213d; border:0; border-radius:8px; padding:10px 16px; font:600 15px system-ui, sans-serif; cursor:pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Pick by ear: pronunciation, voice speed, music</h1>
+  <p class="sub">Put this page next to the audio files. Play each option, pick one per group, then press "Copy my picks" and paste it in the chat.</p>
+  <div id="groups"></div>
+</main>
+<div class="bar"><div class="in"><span id="summary">No picks yet.</span><button id="copy">Copy my picks</button></div></div>
+<script>
+const GROUPS = [
+  // EDIT THIS LIST for each reel. One group per decision; each option = [key, label, audio file next to this page].
+  // Render 3-4 spellings of every tricky word with the reel's own TTS voice; read each back with Whisper first
+  // and drop broken ones. The same page works for voice speed and music previews.
+  { id:"word1", title:'1. "lakh" (hook line)', note:"Listen for words running together.", opts:[
+    ["A","49 lakh","word1_A.wav"], ["B","forty-nine lakh","word1_B.wav"], ["C","lack","word1_C.wav"] ]},
+  { id:"speed", title:"2. Voice speed (full voice-over)", note:"Same words at two speeds.", opts:[
+    ["1.0","Speed 1.0","vo_s100.mp3"], ["1.06","Speed 1.06","vo_s106.mp3"] ]},
+  { id:"music", title:"3. Music (first 18 s under the voice)", note:"Only tracks whose licence allows the use.", opts:[
+    ["A","Track A","music_A.mp3"], ["B","Track B","music_B.mp3"] ]},
+];
+const root = document.getElementById("groups");
+for (const g of GROUPS) {
+  const s = document.createElement("section");
+  s.innerHTML = `<h2>${g.title}</h2><p class="note">${g.note}</p>`;
+  for (const [key, label, file] of g.opts) {
+    const l = document.createElement("label"); l.className = "opt";
+    l.innerHTML = `<input type="radio" name="${g.id}" value="${key}"><span class="txt"><b>${key}</b> · ${label}<small>${file}</small></span><audio controls preload="none" src="${file}"></audio>`;
+    s.appendChild(l);
+  }
+  const o = document.createElement("label"); o.className = "opt";
+  o.innerHTML = `<input type="radio" name="${g.id}" value="own"><span class="txt"><b>None of these</b><small>Type how it should sound</small></span><input class="own" data-for="${g.id}" placeholder="e.g. say it like ...">`;
+  s.appendChild(o);
+  root.appendChild(s);
+}
+function summary() {
+  const parts = GROUPS.map(g => {
+    const r = document.querySelector(`input[name="${g.id}"]:checked`);
+    if (!r) return null;
+    if (r.value === "own") return `${g.id}: none, "${document.querySelector(`.own[data-for="${g.id}"]`).value.trim()}"`;
+    return `${g.id} ${r.value}`;
+  }).filter(Boolean);
+  return parts.length ? parts.join(", ") : "";
+}
+function refresh() { const t = summary(); document.getElementById("summary").textContent = t || "No picks yet."; }
+document.addEventListener("change", refresh);
+document.addEventListener("input", e => {
+  if (e.target.classList.contains("own")) { document.querySelector(`input[name="${e.target.dataset.for}"][value="own"]`).checked = true; }
+  refresh();
+});
+// one sample plays at a time
+document.addEventListener("play", e => { document.querySelectorAll("audio").forEach(a => { if (a !== e.target) a.pause(); }); }, true);
+document.getElementById("copy").addEventListener("click", async () => {
+  const t = summary() || "No picks yet.";
+  try { await navigator.clipboard.writeText(t); document.getElementById("copy").textContent = "Copied"; }
+  catch { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); document.getElementById("copy").textContent = "Copied"; }
+  setTimeout(() => document.getElementById("copy").textContent = "Copy my picks", 1500);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!doctype html>
+<!--
+  video-studio cartoon-avatar template (placeholder character).
+  Shows the rig contract a real character must follow:
+    #avatar > #torso (breath) > #head (tilt) > #eyes (blink), #brows, #mouths > .mouth#m-<X..H>
+    #arm-r (gesture, rotates about the shoulder)
+  Mouth cues: Rhubarb JSON (or scripts/mouth_from_audio.py) pasted into #mouth-cues by
+  scripts/inject_cues.py. Swap the SVG art, keep the ids, and the timeline still works.
+-->
+<html lang="hi" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Cartoon avatar proof</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Mukta"; font-weight: 600; src: url("assets/fonts/Mukta-SemiBold.ttf"); }
+      @font-face { font-family: "Mukta"; font-weight: 800; src: url("assets/fonts/Mukta-ExtraBold.ttf"); }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #eef1f6; font-family: "Mukta", sans-serif; }
+      #bg { position: absolute; inset: 0; background: radial-gradient(110% 70% at 50% 40%, #ffffff 0%, #eef1f6 45%, #d6dee9 100%); }
+      #card-wrap { position: absolute; left: 90px; top: 250px; width: 900px; }
+      #card { background: #ffffff; border-radius: 36px; padding: 44px 52px; box-shadow: 0 24px 60px rgba(0,53,122,.18); border: 2px solid #e3e8f0; }
+      #card .k { font-size: 34px; font-weight: 600; color: #608396; letter-spacing: .02em; }
+      #card .v { font-size: 112px; font-weight: 800; color: #00357a; line-height: 1.05; }
+      #card .s { font-size: 30px; font-weight: 600; color: #4a4848; margin-top: 8px; }
+      #stage { position: absolute; left: 0; top: 380px; width: 1080px; height: 1540px; }
+      .cap { position: absolute; left: 70px; right: 70px; top: 1170px; text-align: center; }
+      .cap span { display: inline-block; background: rgba(10,18,34,.82); color: #fff; font-size: 54px; font-weight: 800;
+                  padding: 10px 26px; border-radius: 18px; line-height: 1.25; }
+      .cap b { color: #f4d049; }
+      .tag { position: absolute; left: 0; right: 0; top: 190px; text-align: center; color: #608396; font-size: 28px; font-weight: 600; letter-spacing: .08em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="{{DURATION}}" data-width="1080" data-height="1920">
+      <div id="bg"></div>
+      <div class="tag">PLACEHOLDER CHARACTER · RIG TEST</div>
+
+      <div id="card-wrap" class="clip" data-start="2.0" data-duration="{{CARD_DURATION}}" data-track-index="1">
+        <div id="card"><div class="k">एस-आई-पी</div><div class="v">हर महीने</div><div class="s">थोड़ा-थोड़ा निवेश (illustrative)</div></div>
+      </div>
+
+      <svg id="stage" class="clip" data-start="0" data-duration="{{DURATION}}" data-track-index="0" viewBox="0 0 1080 1540">
+        <g transform="translate(540 980)">
+          <g id="avatar">
+            <g id="torso">
+              <path d="M-250 600 L-250 0 C-250 -170 -180 -260 0 -270 C180 -260 250 -170 250 0 L250 600 Z" fill="#00357a" stroke="#0a1222" stroke-width="6"/>
+              <path d="M-60 -262 L0 -150 L60 -262 Z" fill="#f4f1ea"/>
+              <path d="M-14 -200 L14 -200 L22 -90 L0 -60 L-22 -90 Z" fill="#f4d049"/>
+              <g transform="translate(205 -230)">
+                <g id="arm-r">
+                  <path d="M-30 0 C10 -10 40 -10 60 10 L40 170 L0 175 Z" fill="#1a4f9c" stroke="#0a1222" stroke-width="6" stroke-linejoin="round"/>
+                  <circle cx="22" cy="190" r="34" fill="#e9b48f" stroke="#7a4a35" stroke-width="5"/>
+                </g>
+              </g>
+              <g transform="translate(0 -300)">
+                <g id="head">
+                  <rect x="-34" y="-10" width="68" height="70" rx="20" fill="#d9a27e"/>
+                  <ellipse cx="0" cy="-150" rx="165" ry="175" fill="#e9b48f" stroke="#7a4a35" stroke-width="6"/>
+                  <ellipse cx="-168" cy="-140" rx="24" ry="40" fill="#e0a985"/>
+                  <ellipse cx="168" cy="-140" rx="24" ry="40" fill="#e0a985"/>
+                  <path d="M-170 -170 C-180 -320 -40 -360 40 -335 C150 -330 190 -250 172 -170 C140 -250 60 -270 -20 -262 C-90 -258 -140 -230 -170 -170 Z" fill="#2a1d17"/>
+                  <g id="brows">
+                    <path d="M-110 -205 Q-75 -228 -40 -210" stroke="#2a1d17" stroke-width="14" fill="none" stroke-linecap="round"/>
+                    <path d="M40 -210 Q75 -228 110 -205" stroke="#2a1d17" stroke-width="14" fill="none" stroke-linecap="round"/>
+                  </g>
+                  <g transform="translate(0 -160)">
+                    <g id="eyes">
+                      <ellipse cx="-75" cy="0" rx="22" ry="28" fill="#1b1410"/>
+                      <ellipse cx="75" cy="0" rx="22" ry="28" fill="#1b1410"/>
+                      <circle cx="-68" cy="-9" r="7" fill="#fff"/>
+                      <circle cx="82" cy="-9" r="7" fill="#fff"/>
+                    </g>
+                  </g>
+                  <ellipse cx="-110" cy="-95" rx="26" ry="14" fill="#f19c8a" opacity=".5"/>
+                  <ellipse cx="110" cy="-95" rx="26" ry="14" fill="#f19c8a" opacity=".5"/>
+                  <g transform="translate(0 -60)">
+                    <g id="mouths">
+                      <path class="mouth" id="m-X" d="M-38 0 Q0 16 38 0" stroke="#6b2a22" stroke-width="9" fill="none" stroke-linecap="round"/>
+                      <path class="mouth" id="m-A" d="M-32 2 L32 2" stroke="#6b2a22" stroke-width="12" fill="none" stroke-linecap="round" opacity="0"/>
+                      <g class="mouth" id="m-B" opacity="0"><ellipse cx="0" cy="4" rx="30" ry="10" fill="#5a1f1a"/><rect x="-20" y="-4" width="40" height="7" rx="3" fill="#fff"/></g>
+                      <g class="mouth" id="m-C" opacity="0"><ellipse cx="0" cy="6" rx="34" ry="19" fill="#5a1f1a"/><rect x="-24" y="-11" width="48" height="8" rx="3" fill="#fff"/></g>
+                      <g class="mouth" id="m-D" opacity="0"><ellipse cx="0" cy="10" rx="38" ry="30" fill="#5a1f1a"/><rect x="-26" y="-18" width="52" height="9" rx="3" fill="#fff"/><ellipse cx="0" cy="26" rx="20" ry="9" fill="#d9665c"/></g>
+                      <g class="mouth" id="m-E" opacity="0"><ellipse cx="0" cy="6" rx="22" ry="22" fill="#5a1f1a"/></g>
+                      <g class="mouth" id="m-F" opacity="0"><ellipse cx="0" cy="4" rx="13" ry="13" fill="#5a1f1a" stroke="#c96f63" stroke-width="5"/></g>
+                      <g class="mouth" id="m-G" opacity="0"><path d="M-30 0 Q0 22 30 0 Z" fill="#5a1f1a"/><rect x="-22" y="-4" width="44" height="9" rx="3" fill="#fff"/></g>
+                      <g class="mouth" id="m-H" opacity="0"><ellipse cx="0" cy="8" rx="32" ry="22" fill="#5a1f1a"/><ellipse cx="0" cy="-2" rx="16" ry="8" fill="#d9665c"/></g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          </g>
+        </g>
+      </svg>
+
+{{CAPTIONS}}
+
+      <audio id="vo" class="clip" src="assets/vo.wav" data-start="0" data-duration="{{VO_DURATION}}" data-track-index="3"></audio>
+    </div>
+
+    <script type="application/json" id="mouth-cues">{{CUES_JSON}}</script>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const D = {{DURATION}};
+      const tl = gsap.timeline({ paused: true });
+      const cues = JSON.parse(document.getElementById("mouth-cues").textContent).mouthCues;
+
+      // mouth: one visible shape at a time, switched on cue starts
+      for (const c of cues) {
+        tl.set(".mouth", { opacity: 0 }, c.start);
+        tl.set("#m-" + c.value, { opacity: 1 }, c.start);
+      }
+
+      // breath: finite yoyo (no repeat: -1 in a seekable render)
+      tl.to("#torso", { y: -6, duration: 1.6, ease: "sine.inOut", yoyo: true, repeat: Math.max(1, Math.floor(D / 1.6) - 1) }, 0);
+
+      // blinks at seeded, deterministic times
+      let seed = 7, t = 0.9;
+      const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      while (t < D - 0.3) {
+        tl.to("#eyes", { scaleY: 0.08, transformOrigin: "50% 50%", duration: 0.06, ease: "power1.in" }, t)
+          .to("#eyes", { scaleY: 1, duration: 0.08, ease: "power1.out" }, t + 0.06);
+        t += 2.4 + rnd() * 1.8;
+      }
+
+      // head: small tilts while talking, head leads, brows follow a beat later
+      [[0.2, 2], [1.6, -2.5], [3.1, 1.5], [4.6, -1.5], [6.0, 0]].forEach(([at, deg]) => {
+        tl.to("#head", { rotation: deg, svgOrigin: "0 0", duration: 0.5, ease: "power2.inOut" }, at);
+        tl.to("#brows", { y: deg > 0 ? -6 : 0, duration: 0.3, ease: "power2.out" }, at + 0.12);
+      });
+
+      // gesture: anticipation, point up at the card, overshoot, settle, lower
+      tl.to("#arm-r", { rotation: 12, svgOrigin: "0 0", duration: 0.18, ease: "power1.in" }, 1.75)
+        .to("#arm-r", { rotation: -138, duration: 0.42, ease: "back.out(1.6)" }, 1.93)
+        .to("#arm-r", { rotation: -128, duration: 0.5, ease: "sine.inOut" }, 2.4)
+        .to("#arm-r", { rotation: 0, duration: 0.55, ease: "power2.inOut" }, Math.min(D - 0.8, 4.8));
+
+      // card pops in on the point
+      tl.from("#card", { y: 40, scale: 0.86, opacity: 0, transformOrigin: "50% 100%", duration: 0.5, ease: "back.out(1.5)" }, 2.0);
+
+      // whole avatar enters from below
+      tl.from("#avatar", { y: 260, duration: 0.6, ease: "power3.out" }, 0);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

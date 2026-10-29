@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/timing.js"></script>
+    <script src="assets/nifty.js"></script>
+    <style>
+      @font-face {
+        font-family: "Inter";
+        src: url("assets/fonts/InterVariable.woff2") format("woff2");
+        font-weight: 100 900;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #f3efe6; }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; font-family: "Inter", sans-serif; }
+      .scene { position: absolute; inset: 0; }
+      #avatar-wrap { position: absolute; left: 40px; top: 880px; width: 1040px; height: 1040px; z-index: 50; }
+      #avatar { position: absolute; left: 0; top: 0; width: 1040px; height: 1040px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="80" data-width="1080" data-height="1920">
+      <!-- one-take world: the camera never cuts; a SIP coin travels the story (real NSE / AMFI data) -->
+      <div id="world" class="scene" data-composition-id="world" data-composition-src="compositions/world.html" data-start="0" data-duration="80" data-track-index="1" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:1"></div>
+
+      <!-- the avatar: one transparent track at a fixed place and size (avatar_track.py) -->
+      <div id="avatar-wrap" data-layout-allow-occlusion>
+        <video id="avatar" class="clip" src="assets/video/avatar.webm" muted playsinline data-start="0" data-duration="80" data-track-index="2" data-layout-allow-occlusion></video>
+      </div>
+
+      <!-- foreground grain -->
+      <div id="fx" class="scene" data-composition-id="fx" data-composition-src="compositions/fx.html" data-start="0" data-duration="80" data-track-index="3" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:60" data-layout-allow-occlusion></div>
+
+      <!-- captions (avatar-free box x 48-590, y 890-1066) -->
+      <div id="cap" class="scene" data-composition-id="cap" data-composition-src="compositions/cap.html" data-start="0" data-duration="80" data-track-index="4" data-track-kind="captions" data-width="1080" data-height="1920" style="z-index:70"></div>
+
+      <audio id="vo" class="clip" src="assets/audio/vo.wav" data-start="0" data-duration="74.4" data-track-index="5" data-volume="1"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      // the avatar leaves for the last frames and rises back in at 0, so the loop seam matches
+      tl.fromTo("#avatar-wrap", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power2.in" }, 79.6);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

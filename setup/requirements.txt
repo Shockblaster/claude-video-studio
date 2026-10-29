@@ -1,0 +1,12 @@
+# video-studio Python packages (Python 3.10-3.12)
+numpy
+scipy
+opencv-python
+pillow
+mediapipe>=0.10.14
+soundfile
+librosa
+matplotlib
+pypdf
+kokoro-onnx
+faster-whisper

@@ -1,0 +1,552 @@
+<!--
+  EXAMPLE ENGINE: one-take explainer world (from a real 80 s finance reel, 2026).
+  - Ten white "station" cards on one big canvas; a hero coin hops card to card, each landing on a
+    spoken word (cue names come from assets/timing.js, built by scripts/pipeline/build_timing.py).
+  - The camera never cuts: eased moves between card framings, wider while travelling, then a pull-out
+    reveal of the whole journey under the disclaimer card, and a dive back to card 1 for the loop.
+  - Charts are drawn from REAL data (assets/nifty.js: NSE Nifty 50 daily closes, fetched Oct 2026).
+    Replace content, data and cue names with your own; every number needs a row in sources.md.
+  - Everything is a pure function of time: render(t). No CSS animations, no Math.random.
+-->
+<template>
+  <style>
+    @font-face { font-family: "Inter"; src: url("assets/fonts/InterVariable.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; background: #f3efe6;
+      font-variant-numeric: tabular-nums; perspective: 2200px; }
+    #w-tilt { position: absolute; inset: 0; transform-origin: 540px 720px; }
+    /* ChatGPT backdrop: soft, out of focus, only behind the presenter (fades out above y ~820 where the cards sit) */
+    #w-plate { position: absolute; left: -40px; top: -40px; width: 1160px; height: 2000px; opacity: .8;
+      -webkit-mask-image: linear-gradient(180deg, transparent 0%, transparent 40%, #000 62%, #000 100%); mask-image: linear-gradient(180deg, transparent 0%, transparent 40%, #000 62%, #000 100%); }
+    #w-plate img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #w-par, #w-cam { position: absolute; left: 0; top: 0; width: 3800px; height: 4600px; transform-origin: 0 0; }
+    /* the world: warm paper with a navy dot grid that moves with the camera (it makes camera moves readable) */
+    #w-ground { position: absolute; left: -400px; top: -900px; width: 4600px; height: 5800px;
+      background-image: radial-gradient(circle, rgba(0,53,122,.13) 2.2px, transparent 2.6px); background-size: 46px 46px; }
+    .w-glow { position: absolute; width: 1700px; height: 1700px; opacity: .9; }
+    .w-glow img { width: 100%; height: 100%; display: block; }
+    #w-track { position: absolute; left: 0; top: 0; width: 3800px; height: 4600px; overflow: visible; }
+    .card { position: absolute; background: #fff; border-radius: 34px; border: 1.5px solid rgba(0,53,122,.08);
+      box-shadow: 0 34px 70px rgba(0,35,87,.13), 0 8px 18px rgba(0,35,87,.07); transform-origin: 50% 50%; }
+    .abs { position: absolute; white-space: nowrap; }
+    .lab { font-size: 30px; font-weight: 700; letter-spacing: .02em; color: #608396; }
+    .ttl { font-size: 46px; font-weight: 800; letter-spacing: -.02em; color: #23283a; }
+    .big { font-size: 156px; font-weight: 800; letter-spacing: -.045em; line-height: 1; }
+    .mid { font-size: 56px; font-weight: 750; letter-spacing: -.02em; color: #23283a; }
+    .foot { font-size: 28px; font-weight: 600; color: #608396; }
+    .pill { border-radius: 999px; padding: 10px 26px; font-size: 32px; font-weight: 750; }
+    .tagI { position: absolute; right: 40px; top: 38px; border-radius: 12px; padding: 6px 16px; font-size: 28px; font-weight: 800;
+      letter-spacing: .04em; color: #00357a; background: #fdf3cf; border: 2px solid #f4d049; }
+    .mk { background-image: linear-gradient(#f4d049, #f4d049); background-repeat: no-repeat; background-position: 0 86%; background-size: 0% 34%; }
+    #coin { position: absolute; left: 0; top: 0; width: 76px; height: 76px; margin: -38px 0 0 -38px; z-index: 30; }
+    #coin-halo { position: absolute; left: -46px; top: -46px; width: 168px; height: 168px; border-radius: 50%; opacity: 0;
+      background: radial-gradient(circle, rgba(244,208,73,.7) 0%, rgba(244,208,73,.25) 45%, rgba(244,208,73,0) 70%); }
+    #coin-shadow { position: absolute; left: 0; top: 0; width: 70px; height: 18px; margin: -9px 0 0 -35px; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(0,35,87,.28), rgba(0,35,87,0) 70%); z-index: 29; }
+    /* screen-space layers */
+    #w-veil { position: absolute; inset: 0; background: rgba(245,241,232,.62); opacity: 0; }
+    #w-vig { position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 85% 70% at 50% 40%, rgba(0,0,0,0) 60%, rgba(0,35,87,.10) 100%); }
+    #w-brand { position: absolute; left: 56px; top: 500px; padding: 22px 34px; border-radius: 30px; background: #fff;
+      box-shadow: 0 24px 60px rgba(0,35,87,.22); opacity: 0; }
+    #w-brand img { height: 66px; display: block; }
+    #w-disc { position: absolute; left: 56px; top: 640px; width: 968px; border-radius: 26px; border: 1.5px solid rgba(255,255,255,.22);
+      background: rgba(8,16,32,.78); color: rgba(255,255,255,.9); font-size: 22px; font-weight: 500; line-height: 1.25;
+      padding: 18px 26px; box-sizing: border-box; opacity: 0; font-variant-numeric: normal; }
+    #w-disc p { margin: 0 0 8px 0; } #w-disc p:last-child { margin-bottom: 0; }
+    #w-disc b { color: #fff; font-weight: 700; }
+  </style>
+  <div id="root" data-composition-id="world" data-width="1080" data-height="1920" data-layout-ignore>
+    <div id="w-plate"><img src="assets/img/backdrop.jpg" alt="" /></div>
+    <div id="w-tilt">
+      <div id="w-par">
+        <div class="w-glow" style="left:-300px;top:-200px"><img src="assets/img/glow_warm.png" alt="" /></div>
+        <div class="w-glow" style="left:2300px;top:300px"><img src="assets/img/glow_cool.png" alt="" /></div>
+        <div class="w-glow" style="left:1000px;top:1300px"><img src="assets/img/glow_warm.png" alt="" /></div>
+        <div class="w-glow" style="left:-200px;top:2500px"><img src="assets/img/glow_cool.png" alt="" /></div>
+        <div class="w-glow" style="left:2300px;top:2600px"><img src="assets/img/glow_warm.png" alt="" /></div>
+        <div class="w-glow" style="left:1200px;top:3500px"><img src="assets/img/glow_cool.png" alt="" /></div>
+      </div>
+      <div id="w-cam">
+        <div id="w-ground"></div>
+        <svg id="w-track" viewBox="0 0 3800 4600">
+          <path id="w-path" d="" fill="none" stroke="rgba(0,53,122,.16)" stroke-width="7" stroke-dasharray="4 22" stroke-linecap="round" />
+          <path id="w-path2" d="" fill="none" stroke="#f4d049" stroke-width="9" stroke-linecap="round" />
+        </svg>
+
+        <!-- S1: the hook counter -->
+        <div class="card" id="c1">
+          <div class="abs lab" style="left:56px;top:48px">AMFI DATA · SEPTEMBER 2026</div>
+          <div class="abs big" id="c1-num" style="left:50px;top:104px;color:#b5473a">49,68,000</div>
+          <div class="abs mid" style="left:56px;top:290px"><span class="mk" id="c1-mk">SIPs stopped or ended</span></div>
+          <div class="abs foot" style="left:56px;top:378px">Includes SIPs that ended on schedule.</div>
+          <div class="abs pill" id="c1-btn" style="left:600px;top:452px;border:3px solid #00357a;color:#00357a;background:#fff">Stop my SIP?</div>
+          <div class="abs" id="c1-stamp" style="left:250px;top:150px;padding:4px 44px 14px;border-radius:26px;background:#00357a;color:#fff;font-size:150px;font-weight:850;letter-spacing:-.04em;opacity:0;box-shadow:0 26px 50px rgba(0,35,87,.35)">Wait.<div style="position:absolute;left:44px;right:44px;bottom:12px;height:14px;border-radius:7px;background:#f4d049"></div></div>
+        </div>
+
+        <!-- S2: Nifty 2026, real NSE closes -->
+        <div class="card" id="c2">
+          <div class="abs ttl" style="left:56px;top:40px">Nifty 50 in 2026</div>
+          <div class="abs foot" style="left:56px;top:100px">Daily closes. Source: NSE</div>
+          <svg class="abs" id="c2-svg" style="left:0;top:0" width="980" height="660" viewBox="0 0 980 660">
+            <defs><linearGradient id="c2-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b5473a" stop-opacity=".22" /><stop offset="1" stop-color="#b5473a" stop-opacity="0" /></linearGradient></defs>
+            <g id="c2-grid"></g>
+            <path id="c2-area" d="" fill="url(#c2-fill)" />
+            <path id="c2-line" d="" fill="none" stroke="#00357a" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />
+          </svg>
+          <div class="abs" id="c2-hi" style="font-size:28px;font-weight:750;color:#23283a;opacity:0">High 26,373 · 5 Jan</div>
+          <div class="abs pill" id="c2-badge" style="background:#b5473a;color:#fff;opacity:0">13.7% below the high</div>
+          <div class="abs" id="c2-last" style="font-size:28px;font-weight:750;color:#b5473a;opacity:0">22,750 · 27 Oct</div>
+          <div class="abs pill" id="c2-sip" style="left:56px;top:578px;background:#eef0f4;color:#23283a">Your SIP <span id="c2-red" style="color:#b5473a;opacity:0">is in the red ▼</span></div>
+          <div class="abs pill" id="c2-stop" style="left:640px;top:578px;background:#fff;border:3px solid #b5473a;color:#b5473a">STOP SIP</div>
+        </div>
+
+        <!-- S3: the twist -->
+        <div class="card" id="c3">
+          <div class="abs lab" style="left:56px;top:48px">SAME MONTH · SEPTEMBER 2026</div>
+          <div class="abs big" id="c3-num" style="left:50px;top:104px;color:#0e9a49">63,26,000</div>
+          <div class="abs mid" style="left:56px;top:290px">new SIPs started</div>
+          <div class="abs foot" style="left:56px;top:384px">Started</div>
+          <div class="abs" id="c3-b1" style="left:310px;top:388px;height:30px;border-radius:15px;background:#0e9a49;width:0"></div>
+          <div class="abs foot" style="left:56px;top:432px">Stopped or ended</div>
+          <div class="abs" id="c3-b2" style="left:310px;top:436px;height:30px;border-radius:15px;background:#b5473a;width:0"></div>
+          <div class="abs pill" id="c3-rec" style="left:56px;top:500px;background:#f4d049;color:#00357a;opacity:0">Record Rs 32,490 crore into SIPs</div>
+          <div class="abs foot" style="right:40px;top:52px;position:absolute">Source: AMFI</div>
+        </div>
+
+        <!-- S4: what a SIP does (illustrative maths) -->
+        <div class="card" id="c4">
+          <div class="abs ttl" style="left:56px;top:40px">What your SIP is really doing</div>
+          <div class="tagI">ILLUSTRATIVE</div>
+          <div class="abs pill" id="c4-amt" style="left:56px;top:110px;background:#f4d049;color:#00357a;opacity:0">Rs 10,000 every month</div>
+          <div class="abs pill" id="c4-tagA" style="left:150px;top:190px;background:#00357a;color:#fff">Price Rs 100</div>
+          <div class="abs pill" id="c4-tagB" style="left:620px;top:190px;background:#b5473a;color:#fff;opacity:0">Price Rs 80</div>
+          <div class="abs" style="left:190px;top:268px;width:140px;height:20px;border-radius:10px;background:#23283a"></div>
+          <div class="abs" style="left:650px;top:268px;width:140px;height:20px;border-radius:10px;background:#23283a"></div>
+          <div id="c4-blocks"></div>
+          <div class="abs" id="c4-lA" style="font-size:46px;font-weight:800;color:#00357a;opacity:0">100 units</div>
+          <div class="abs" id="c4-lB" style="font-size:46px;font-weight:800;color:#0e9a49;opacity:0">125 units</div>
+          <div class="abs" id="c4-sale" style="left:770px;top:312px;transform-origin:50% 0;opacity:0">
+            <div style="padding:10px 26px 14px;border-radius:14px;background:#b5473a;color:#fff;font-size:54px;font-weight:850;letter-spacing:.02em;box-shadow:0 18px 36px rgba(181,71,58,.35)">SALE</div>
+          </div>
+          <div class="abs" id="c4-saleTxt" style="left:500px;top:110px;font-size:32px;font-weight:750;color:#b5473a;opacity:0">+25 units, same Rs 10,000</div>
+        </div>
+
+        <!-- S5: six missed months -->
+        <div class="card" id="c5">
+          <div class="abs ttl" style="left:56px;top:40px">Stop for 6 months at Rs 80</div>
+          <div class="tagI">ILLUSTRATIVE</div>
+          <div id="c5-tiles"></div>
+          <div class="abs pill" id="c5-total" style="left:56px;top:500px;background:#b5473a;color:#fff;font-size:44px;opacity:0">750 units missed</div>
+        </div>
+
+        <!-- S6: what those units would be worth -->
+        <div class="card" id="c6">
+          <div class="abs ttl" style="left:56px;top:40px">If the price gets back to <span id="c6-p">Rs 80</span></div>
+          <div class="abs" id="c6-eq" style="left:56px;top:128px;font-size:52px;font-weight:750;color:#23283a;opacity:0">750 units × Rs 100 =</div>
+          <div class="abs" id="c6-val" style="left:56px;top:196px;font-size:96px;font-weight:850;letter-spacing:-.03em;color:#00357a;opacity:0">Rs 75,000</div>
+          <div class="abs foot" id="c6-l1" style="left:56px;top:330px;opacity:0">Value of the units you missed</div>
+          <div class="abs" id="c6-b1" style="left:56px;top:372px;height:64px;border-radius:18px;background:#f4d049;width:0"></div>
+          <div class="abs foot" id="c6-l2" style="left:56px;top:460px;opacity:0">Money you held back: Rs 60,000</div>
+          <div class="abs" id="c6-b2" style="left:56px;top:502px;height:64px;border-radius:18px;background:#bdb9ac;width:0"></div>
+          <div class="abs" id="c6-gap" style="left:704px;top:508px;font-size:40px;font-weight:850;color:#0e9a49;opacity:0"><span class="mk" id="c6-mk">+Rs 15,000</span></div>
+          <div class="abs foot" style="left:56px;top:612px">ILLUSTRATIVE. Not a prediction.</div>
+        </div>
+
+        <!-- S7: Nifty 2020, real NSE closes -->
+        <div class="card" id="c7">
+          <div class="abs ttl" style="left:56px;top:40px">Nifty 50 in 2020</div>
+          <div class="abs foot" style="left:56px;top:100px">Daily closes. Source: NSE</div>
+          <svg class="abs" id="c7-svg" style="left:0;top:0" width="980" height="680" viewBox="0 0 980 680">
+            <defs><linearGradient id="c7-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e9a49" stop-opacity=".2" /><stop offset="1" stop-color="#0e9a49" stop-opacity="0" /></linearGradient></defs>
+            <g id="c7-grid"></g>
+            <line id="c7-old" x1="56" x2="834" y1="0" y2="0" stroke="#608396" stroke-width="3" stroke-dasharray="10 10" opacity="0" />
+            <path id="c7-area" d="" fill="url(#c7-fill)" />
+            <path id="c7-line" d="" fill="none" stroke="#00357a" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />
+            <g id="c7-dots"></g>
+          </svg>
+          <div class="abs" id="c7-oldl" style="font-size:26px;font-weight:700;color:#608396;opacity:0">Old high 12,430 (20 Jan)</div>
+          <div class="abs pill" id="c7-badge" style="background:#b5473a;color:#fff;opacity:0">−39.6% by 24 Mar</div>
+          <div class="abs pill" id="c7-back" style="background:#0e9a49;color:#fff;opacity:0">Back above: 9 Nov</div>
+          <div class="abs" id="c7-buys" style="font-size:28px;font-weight:750;color:#0e9a49;opacity:0">● Monthly SIP buys near the bottom</div>
+          <div class="abs foot" style="left:56px;top:618px">Past performance does not guarantee future returns.</div>
+        </div>
+
+        <!-- S8: when to stop -->
+        <div class="card" id="c8">
+          <div class="abs" style="left:56px;top:40px;font-size:56px;font-weight:850;letter-spacing:-.03em;color:#23283a">When should you stop?</div>
+          <div id="c8-rows"></div>
+        </div>
+
+        <!-- S9: pause, the coin is the switch knob -->
+        <div class="card" id="c9">
+          <div class="abs ttl" style="left:56px;top:40px">If cash is tight</div>
+          <div class="abs" id="c9-track" style="left:120px;top:150px;width:700px;height:150px;border-radius:75px;background:#eef0f4;border:3px solid rgba(0,53,122,.12)"></div>
+          <div class="abs" id="c9-fill" style="left:120px;top:150px;width:150px;height:150px;border-radius:75px;background:#0e9a49;opacity:0"></div>
+          <div class="abs" id="c9-cancel" style="left:120px;top:318px;font-size:44px;font-weight:850;color:#b5473a;letter-spacing:.02em">CANCEL</div>
+          <div class="abs" id="c9-pause" style="left:676px;top:318px;font-size:44px;font-weight:850;color:#00357a;letter-spacing:.02em;opacity:.35">PAUSE</div>
+          <div class="abs" id="c9-strike" style="left:112px;top:344px;height:8px;border-radius:4px;background:#b5473a;width:0"></div>
+          <div class="abs" id="c9-txt" style="left:56px;top:400px;font-size:38px;font-weight:750;color:#23283a;opacity:0">Pause for a few months. It restarts after.</div>
+          <div class="abs foot" style="left:56px;top:470px;display:none"></div><div class="abs foot" style="left:56px;top:478px">Pause rules vary by fund house.</div>
+        </div>
+
+        <!-- S10: send -->
+        <div class="card" id="c10">
+          <div class="abs" style="left:56px;top:44px;font-size:46px;font-weight:850;letter-spacing:-.02em;color:#23283a;line-height:1.15;white-space:normal;width:748px">Send this to the friend who just stopped their SIP</div>
+          <div class="abs" id="c10-btn" style="left:56px;top:250px;width:748px;height:112px;border-radius:30px;background:#00357a;color:#fff;font-size:50px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:22px;transform-origin:50% 50%">
+            <svg width="54" height="54" viewBox="-30 -30 60 60"><path d="M-24,-18 L28,0 L-24,18 L-14,0 Z" fill="#f4d049" /><path d="M-14,0 L28,0 L-24,18 Z" fill="#e1b83a" /></svg>Send</div>
+        </div>
+
+        <div id="coin-shadow"></div>
+        <div id="coin"><div id="coin-halo"></div>
+          <svg width="76" height="76" viewBox="-38 -38 76 76" style="position:absolute;left:0;top:0;overflow:visible">
+            <defs><radialGradient id="cg" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff3b8" /><stop offset=".45" stop-color="#f4d049" /><stop offset="1" stop-color="#c8901f" /></radialGradient></defs>
+            <circle r="36" fill="#a8701a" /><circle r="33" fill="url(#cg)" /><circle r="25" fill="none" stroke="#c8901f" stroke-width="2.5" opacity=".7" />
+            <text y="9" text-anchor="middle" font-family="Inter" font-size="24" font-weight="850" fill="#00357a" letter-spacing="-.5">SIP</text>
+          </svg></div>
+      </div>
+    </div>
+    <div id="w-veil"></div>
+    <div id="w-vig"></div>
+    <div id="w-brand"><img src="assets/img/logo.png" alt="Brand" /></div>
+    <div id="w-disc"><p><b>[Your compliance / disclaimer text, VERBATIM, first line bold]</b> Paste the exact wording your compliance team supplies. Never rewrite it.</p></div>
+  </div>
+  <script>
+    (function () {
+      // ---------- helpers (pure functions of time)
+      const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+      const lerp = (a, b, k) => a + (b - a) * k;
+      const seg = (t, a, b) => clamp((t - a) / (b - a));
+      const eio = x => (x = clamp(x), x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+      const eout = x => 1 - Math.pow(1 - clamp(x), 3);
+      function spring(t, w = 14, z = 0.62) { if (t <= 0) return 0; const wd = w * Math.sqrt(1 - z * z);
+        return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + (z * w / wd) * Math.sin(wd * t)); }
+      const pop = (t, t0, w = 16, z = 0.55) => spring(t - t0, w, z);            // 0 -> 1 with overshoot
+      const $ = id => document.getElementById(id);
+      const T = (window.__T && window.__T.w) || {};
+      const C = k => T[k];
+      const DUR = 80, R0 = 76.2, R1 = 78.8;                                       // station reset window (loop)
+      const RES = t => 1 - eio(seg(t, R0, R1));                                    // 1 = live state, 0 = start state
+
+      // ---------- stations (world coords, centre + size)
+      const ST = { c1: [600, 600, 940, 560], c2: [1750, 640, 980, 690], c3: [2900, 600, 940, 600], c4: [2900, 1750, 980, 730],
+        c5: [1750, 1750, 960, 640], c6: [600, 1750, 960, 700], c7: [600, 2900, 980, 680], c8: [1750, 2900, 940, 640],
+        c9: [2900, 2900, 940, 560], c10: [2900, 3850, 860, 420] };
+      const L = k => ST[k][0] - ST[k][2] / 2, Tp = k => ST[k][1] - ST[k][3] / 2;   // card left / top
+      for (const k in ST) { const e = $(k); e.style.left = L(k) + "px"; e.style.top = Tp(k) + "px"; e.style.width = ST[k][2] + "px"; e.style.height = ST[k][3] + "px"; }
+      const P = (k, x, y) => [L(k) + x, Tp(k) + y];                               // point inside a card
+      const RAD = 37;
+
+      // ---------- real NSE data -> polylines in card coords
+      const N = window.__NIFTY;
+      function series(key, box, ymin, ymax) {
+        const c = N[key].c, n = c.length;
+        return c.map((v, i) => [box[0] + (box[2] - box[0]) * i / (n - 1), box[3] - (box[3] - box[1]) * (v - ymin) / (ymax - ymin)]);
+      }
+      const BOX2 = [56, 150, 834, 500], BOX7 = [56, 160, 834, 560];
+      const S26 = series("2026", BOX2, 21800, 26800), S20 = series("2020", BOX7, 7000, 14400);
+      const yOf = (box, ymin, ymax, v) => box[3] - (box[3] - box[1]) * (v - ymin) / (ymax - ymin);
+      function grid(gid, box, ymin, ymax, step, key) {
+        const g = $(gid); let h = "";
+        for (let v = Math.ceil(ymin / step) * step; v <= ymax; v += step) { const y = yOf(box, ymin, ymax, v);
+          h += `<line x1="${box[0]}" x2="${box[2]}" y1="${y}" y2="${y}" stroke="rgba(0,53,122,.08)" stroke-width="2"/>` +
+               `<text x="924" y="${y + 8}" text-anchor="end" font-family="Inter" font-size="22" font-weight="600" fill="#9aa9b8">${v.toLocaleString("en-IN")}</text>`; }
+        const d = N[key].d, n = d.length, seen = {};
+        d.forEach((s, i) => { const m = s.slice(3, 6); if (!seen[m]) { seen[m] = 1; const x = box[0] + (box[2] - box[0]) * i / (n - 1);
+          h += `<text x="${x}" y="${box[3] + 34}" font-family="Inter" font-size="22" font-weight="600" fill="#9aa9b8">${m[0] + m.slice(1).toLowerCase()}</text>`; } });
+        g.innerHTML = h;
+      }
+      grid("c2-grid", BOX2, 21800, 26800, 1000, "2026"); grid("c7-grid", BOX7, 7000, 14400, 2000, "2020");
+      const idx = (key, d) => N[key].d.indexOf(d);
+      const pathTo = (S, u) => { const n = S.length, f = u * (n - 1), i = Math.floor(f); let d = "M" + S[0][0] + "," + S[0][1];
+        for (let j = 1; j <= i && j < n; j++) d += "L" + S[j][0] + "," + S[j][1];
+        if (i < n - 1) { const a = S[i], b = S[i + 1], k = f - i; d += "L" + lerp(a[0], b[0], k) + "," + lerp(a[1], b[1], k); } return d; };
+      const ptAt = (S, u) => { const n = S.length, f = clamp(u) * (n - 1), i = Math.min(n - 2, Math.floor(f)), k = f - i; return [lerp(S[i][0], S[i + 1][0], k), lerp(S[i][1], S[i + 1][1], k)]; };
+      const areaTo = (S, u, base) => { const p = ptAt(S, u); return pathTo(S, u) + `L${p[0]},${base}L${S[0][0]},${base}Z`; };
+      const hi26 = idx("2026", "05-JAN-2026"), n26 = S26.length;
+      const i20hi = idx("2020", "20-JAN-2020"), i20lo = idx("2020", "23-MAR-2020"), i20nov = idx("2020", "09-NOV-2020"), n20 = S20.length;
+      // labels placed from the data
+      const pHi = S26[hi26]; Object.assign($("c2-hi").style, { left: pHi[0] + 18 + "px", top: pHi[1] - 50 + "px" });
+      const pLast = S26[n26 - 1]; Object.assign($("c2-last").style, { left: pLast[0] - 230 + "px", top: pLast[1] + 26 + "px" });
+      Object.assign($("c2-badge").style, { left: 556 + "px", top: 40 + "px" });
+      const yOld = yOf(BOX7, 7000, 14400, 12430.5); $("c7-old").setAttribute("y1", yOld); $("c7-old").setAttribute("y2", yOld);
+      Object.assign($("c7-oldl").style, { left: "320px", top: yOld - 42 + "px" });
+      const pLo = S20[i20lo]; Object.assign($("c7-badge").style, { left: pLo[0] + 34 + "px", top: pLo[1] - 30 + "px" });
+      const pNov = S20[i20nov]; Object.assign($("c7-back").style, { left: pNov[0] - 330 + "px", top: yOld - 128 + "px" });
+      Object.assign($("c7-buys").style, { left: "470px", top: "102px" });
+      // monthly SIP buys near the bottom: first trading day of Mar, Apr, May 2020 (real closes)
+      const buyIdx = ["MAR", "APR", "MAY"].map(m => N["2020"].d.findIndex(s => s.slice(3, 6) === m));
+      $("c7-dots").innerHTML = buyIdx.map((i, j) => `<circle id="c7-d${j}" cx="${S20[i][0]}" cy="${S20[i][1]}" r="14" fill="#0e9a49" stroke="#fff" stroke-width="4" opacity="0"/>`).join("");
+
+      // ---------- S4 blocks, S5 tiles, S8 rows
+      let bh = "";
+      for (let i = 0; i < 5; i++) bh += `<div class="abs" id="c4-a${i}" style="left:150px;width:220px;height:62px;border-radius:14px;background:#00357a;color:#fff;font-size:26px;font-weight:750;display:flex;align-items:center;justify-content:center;opacity:0">25 units</div>`;
+      for (let i = 0; i < 5; i++) bh += `<div class="abs" id="c4-b${i}" style="left:610px;width:220px;height:62px;border-radius:14px;background:#0e9a49;color:#fff;font-size:26px;font-weight:750;display:flex;align-items:center;justify-content:center;opacity:0">25 units</div>`;
+      $("c4-blocks").innerHTML = bh;
+      const BLK = i => 648 - 70 * (i + 1);                                        // block top (card coords), stack base 648
+      let th = "";
+      for (let i = 0; i < 6; i++) { const x = 56 + (i % 3) * 290, y = 130 + Math.floor(i / 3) * 176;
+        th += `<div class="abs" id="c5-t${i}" style="left:${x}px;top:${y}px;width:266px;height:152px;border-radius:22px;background:#eef3fb;border:2.5px solid rgba(0,53,122,.15)">
+          <div class="abs" style="left:22px;top:18px;font-size:28px;font-weight:700;color:#608396">Month ${i + 1}</div>
+          <div class="abs" id="c5-u${i}" style="left:22px;top:62px;font-size:44px;font-weight:850;color:#00357a">+125 units</div>
+          <div class="abs" id="c5-x${i}" style="left:16px;top:86px;height:7px;border-radius:4px;background:#b5473a;width:0"></div></div>`; }
+      $("c5-tiles").innerHTML = th;
+      const ROWS = [["1", "Your goal has changed", "tick"], ["2", "You need that money", "tick"], ["", "A falling market alone", "cross"]];
+      $("c8-rows").innerHTML = ROWS.map((r, i) => `<div class="abs" style="left:56px;top:${160 + i * 142}px;width:828px;height:118px;border-radius:24px;background:#f5f6f9">
+        <div class="abs" id="c8-b${i}" style="left:24px;top:23px;width:72px;height:72px;border-radius:36px;border:4px solid #bdb9ac;background:#fff"></div>
+        <svg class="abs" id="c8-m${i}" style="left:24px;top:23px;opacity:0" width="72" height="72" viewBox="0 0 72 72">${r[2] === "tick"
+          ? '<path d="M20,37 L31,48 L53,24" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>'
+          : '<path d="M24,24 L48,48 M48,24 L24,48" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/>'}</svg>
+        <div class="abs" style="left:122px;top:30px;font-size:46px;font-weight:800;color:#23283a">${r[0] ? r[0] + ".&nbsp;" : ""}${r[1]}</div>
+        ${i === 2 ? '<div class="abs" id="c8-strike" style="left:122px;top:60px;height:7px;border-radius:4px;background:#b5473a;width:0"></div><div class="abs" id="c8-no" style="left:660px;top:36px;font-size:34px;font-weight:850;color:#b5473a;opacity:0">is no reason</div>' : ""}</div>`).join("");
+
+      // ---------- the coin's journey: contacts on the voice's words
+      const A0 = [L("c1") + 800, Tp("c1") - RAD];                                 // loop point: lands on card 1's top edge
+      const SEG = [];                                                             // {t0,t1,from,to,h} hops; ride/launch handled apart
+      let cur = A0, last = 0;
+      const hop = (t0, t1, to, h = 160) => { SEG.push({ t0, t1, from: cur, to, h }); cur = to; };
+      hop(C("n49") - 0.34, C("n49") - 0.02, P("c1", 640, 104 + 26 - RAD), 150);
+      hop(C("thinking") - 0.3, C("thinking"), P("c1", 720, 452 - RAD), 140);
+      hop(C("wait") + 0.02, C("wait") + 0.42, P("c1", 880, -RAD), 200);
+      const R26 = { t0: C("nifty") + 0.02, t1: C("high") - 0.08 };
+      hop(R26.t0 - 0.62, R26.t0, [L("c2") + S26[0][0], Tp("c2") + S26[0][1]], 260);
+      const pSipChip = P("c2", 210, 578 - RAD), pStop = P("c2", 770, 578 - RAD);
+      cur = [L("c2") + S26[n26 - 1][0], Tp("c2") + S26[n26 - 1][1]];
+      hop(C("yoursip") - 0.2, C("yoursip") + 0.16, pSipChip, 120);
+      const ROLL = { t0: C("stopping"), t1: C("safe") + 0.1, from: pSipChip, to: pStop };
+      cur = pStop;
+      hop(C("yet") - 0.55, C("yet") + 0.05, P("c3", 800, -RAD), 300);
+      hop(C("n63") - 0.32, C("n63") - 0.02, P("c3", 640, 104 + 26 - RAD), 150);
+      hop(C("heres") - 0.62, C("heres"), P("c4", 880, -RAD), 260);
+      hop(C("invest") - 0.3, C("invest") + 0.02, P("c4", 380, 110 - RAD), 130);
+      const SLOT_A = P("c4", 260, 268 - RAD), SLOT_B = P("c4", 720, 268 - RAD);
+      hop(C("at") - 0.3, C("at") + 0.08, SLOT_A, 150);
+      const SINK = [[C("at") + 0.4, C("at") + 0.75], [C("same") + 0.3, C("same") + 0.65]];
+      const NEW1 = C("when") - 0.15, TOPC = P("c4", 490, -RAD);                   // a new month's coin appears on top
+      cur = TOPC;
+      hop(C("same") - 0.32, C("same") + 0.02, SLOT_B, 150);
+      const NEW2 = C("u125") + 1.0, ON_B = P("c4", 720, BLK(4) - RAD);
+      cur = ON_B;
+      const TILE = i => P("c5", 56 + (i % 3) * 290 + 133, 130 + Math.floor(i / 3) * 176 - RAD);
+      hop(C("stop6") - 0.6, C("stop6"), TILE(0), 260);
+      const TT = []; const tA = C("six"), tB = C("miss") - 0.05;
+      for (let i = 1; i < 6; i++) { const t1 = lerp(tA, tB, i / 5); hop(t1 - 0.34, t1, TILE(i), 110); TT.push(t1); }
+      hop(C("u750") - 0.36, C("u750"), P("c5", 230, 500 - RAD), 140);
+      hop(C("if") - 0.6, C("if"), P("c6", 820, -RAD), 260);
+      hop(C("r75k") - 0.4, C("r75k"), P("c6", 56 + 780, 372 - RAD), 150);
+      hop(C("r60k") - 0.36, C("r60k"), P("c6", 56 + 624, 502 - RAD), 120);
+      const R20 = { t0: C("y2020") + 0.05 };
+      hop(C("y2020") - 0.62, C("y2020"), [L("c7") + S20[0][0], Tp("c7") + S20[0][1]], 260);
+      cur = [L("c7") + S20[n20 - 1][0], Tp("c7") + S20[n20 - 1][1]];
+      hop(C("so") - 0.62, C("so"), P("c8", 800, -RAD), 240);
+      const BOXP = i => P("c8", 56 + 24 + 36, 160 + i * 142 + 23 - RAD);
+      hop(C("one") - 0.32, C("one"), BOXP(0), 140);
+      hop(C("two") - 0.32, C("two"), BOXP(1), 120);
+      hop(C("falling") - 0.32, C("falling"), BOXP(2), 120);
+      const KNOB_L = P("c9", 120 + 75, 150 + 75), KNOB_R = P("c9", 120 + 700 - 75, 150 + 75);
+      hop(C("cash") - 0.62, C("cash") - 0.1, KNOB_L, 220);
+      const SLIDE = { t0: C("pause") - 0.1, t1: C("pause") + 0.42 };
+      cur = KNOB_R;
+      hop(C("send") - 0.6, C("send"), P("c10", 680, 250 - RAD), 220);
+      const LAUNCH = { t0: C("friend") + 0.06, t1: DUR, from: cur, to: A0, apex: -150 };
+
+      // 2020 ride: index keys on the words
+      const ride20 = t => { const k = [[R20.t0, 0], [C("fell") - 0.3, i20hi], [C("pct40") + 0.6, i20lo], [C("november") - 0.05, i20lo + 4],
+          [C("oldhigh"), i20nov], [C("kept") + 0.5, n20 - 1]];
+        if (t <= k[0][0]) return 0; for (let j = 1; j < k.length; j++) if (t <= k[j][0]) return lerp(k[j - 1][1], k[j][1], eio(seg(t, k[j - 1][0], k[j][0]))) / (n20 - 1);
+        return 1; };
+      const ride26 = t => eio(seg(t, R26.t0, R26.t1));
+      function coinAt(t) {
+        // returns [x, y, airborne, scale]
+        if (t >= LAUNCH.t0) { const u = clamp(seg(t, LAUNCH.t0, LAUNCH.t1) + 0.82 * Math.sin(2 * Math.PI * seg(t, LAUNCH.t0, LAUNCH.t1)) / (2 * Math.PI));
+          const f = LAUNCH.from, g = LAUNCH.to, mid = (f[1] + g[1]) / 2, H = mid - LAUNCH.apex;
+          return [lerp(f[0], g[0], u), lerp(f[1], g[1], u) - 4 * H * u * (1 - u), 1, 1]; }
+        if (t >= R20.t0 && t < C("so") - 0.62) { const p = ptAt(S20, ride20(t)); return [L("c7") + p[0], Tp("c7") + p[1], 0, 0.8]; }
+        if (t >= R26.t0 && t < C("yoursip") - 0.2) { const p = ptAt(S26, ride26(t)); return [L("c2") + p[0], Tp("c2") + p[1], 0, 0.8]; }
+        if (t >= ROLL.t0 && t < C("yet") - 0.55) { const k = eout(seg(t, ROLL.t0, ROLL.t1)); return [lerp(ROLL.from[0], ROLL.to[0], k), ROLL.from[1], 0, 1]; }
+        if (t >= SLIDE.t0 - 0.6 && t < C("send") - 0.6) { const k = spring(t - SLIDE.t0, 11, 0.7) * (t >= SLIDE.t0 ? 1 : 0); return [lerp(KNOB_L[0], KNOB_R[0], k), KNOB_L[1], 0, 1.9]; }
+        let p = A0, s = 1;
+        for (const g of SEG) {
+          if (t < g.t0) break;
+          if (t <= g.t1) { const u = (t - g.t0) / (g.t1 - g.t0); const sc0 = g.to === KNOB_L ? lerp(1, 1.9, eio(u)) : (g.from === KNOB_R ? lerp(1.9, 1, eio(u)) : 1);
+            return [lerp(g.from[0], g.to[0], u), lerp(g.from[1], g.to[1], u) - 4 * g.h * u * (1 - u), 1, sc0]; }
+          p = g.to; s = g.to === KNOB_L ? 1.9 : 1;
+        }
+        return [p[0], p[1], 0, s];
+      }
+      // contact instants (for squash): every hop landing
+      const CONTACTS = SEG.map(g => g.t1).concat([0, R26.t0, R20.t0]);
+      // the travelled path, drawn as one dashed line through the stations
+      const ORDER = ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10"];
+      const ARR = [0, R26.t0 - 0.6, C("yet"), C("heres"), C("stop6"), C("if"), C("y2020"), C("so"), C("cash"), C("send")];
+      const CTR = ORDER.map(k => [ST[k][0], ST[k][1]]);
+      let pd = "M" + CTR[0][0] + "," + CTR[0][1];
+      for (let i = 1; i < CTR.length; i++) { const a = CTR[i - 1], b = CTR[i]; pd += ` C${a[0]},${(a[1] + b[1]) / 2} ${b[0]},${(a[1] + b[1]) / 2} ${b[0]},${b[1]}`; }
+      $("w-path").setAttribute("d", pd); $("w-path2").setAttribute("d", pd);
+      const PL = $("w-path2").getTotalLength();
+      const segLen = []; { const tmp = document.createElementNS("http://www.w3.org/2000/svg", "path"); let d = "M" + CTR[0][0] + "," + CTR[0][1]; segLen.push(0);
+        for (let i = 1; i < CTR.length; i++) { const a = CTR[i - 1], b = CTR[i]; d += ` C${a[0]},${(a[1] + b[1]) / 2} ${b[0]},${(a[1] + b[1]) / 2} ${b[0]},${b[1]}`; tmp.setAttribute("d", d); $("w-track").appendChild(tmp); segLen.push(tmp.getTotalLength()); tmp.remove(); } }
+      $("w-path2").style.strokeDasharray = PL + " " + PL;
+
+      // ---------- camera: station framings, eased moves on the hops, reveal, dive
+      const SC = { x: 540, y: 515 };
+      const frame = k => { const [x, y, w, h] = ST[k]; return [x, y, Math.min(1000 / w, 690 / h)]; };
+      const REV = [1730, 1465, 0.27];
+      const CAMK = [[0, frame("c1")], [C("wait") + 0.55, frame("c1")], [R26.t0 + 0.05, frame("c2")], [C("yet") - 0.6, frame("c2")], [C("yet") + 0.1, frame("c3")],
+        [C("heres") - 0.65, frame("c3")], [C("heres") + 0.05, frame("c4")], [C("stop6") - 0.65, frame("c4")], [C("stop6") + 0.05, frame("c5")],
+        [C("if") - 0.65, frame("c5")], [C("if") + 0.05, frame("c6")], [C("y2020") - 0.65, frame("c6")], [C("y2020") + 0.05, frame("c7")],
+        [C("so") - 0.65, frame("c7")], [C("so") + 0.05, frame("c8")], [C("cash") - 0.65, frame("c8")], [C("cash") - 0.05, frame("c9")],
+        [C("send") - 0.65, frame("c9")], [C("send") + 0.05, frame("c10")], [LAUNCH.t0, frame("c10")], [LAUNCH.t0 + 1.35, REV], [79.25, [REV[0] + 30, REV[1] - 40, REV[2] * 1.03]],
+        [DUR, frame("c1")]];
+      function cam(t) {
+        let j = 1; while (j < CAMK.length - 1 && t > CAMK[j][0]) j++;
+        const [ta, A] = CAMK[j - 1], [tb, B] = CAMK[j], u = eio(seg(t, ta, tb));
+        // zoom path: scale on a log curve; the station being left (zoom out) or reached (zoom in) slides
+        // smoothly in screen space, so nothing swings across the frame mid-move
+        let s = Math.exp(lerp(Math.log(A[2]), Math.log(B[2]), u));
+        const moving = A !== B && (A[0] !== B[0] || A[1] !== B[1]);
+        const travel = moving && B !== REV && A !== REV && !(j === CAMK.length - 1);
+        if (travel) s *= 1 - 0.2 * Math.sin(Math.PI * u);                                                       // wider while travelling
+        if (B[2] < A[2]) return [A[0] + u * (B[2] / s) * (B[0] - A[0]), A[1] + u * (B[2] / s) * (B[1] - A[1]), s];
+        return [B[0] - (1 - u) * (A[2] / s) * (B[0] - A[0]), B[1] - (1 - u) * (A[2] / s) * (B[1] - A[1]), s];
+      }
+      const tiltAt = t => 10 * eio(seg(t, LAUNCH.t0 + 0.2, LAUNCH.t0 + 1.35)) * (1 - eio(seg(t, 79.2, DUR)));
+
+      // ---------- render(t): sets every element for time t (pure)
+      const setOp = (id, v) => { $(id).style.opacity = v; };
+      const tf = (id, v) => { $(id).style.transform = v; };
+      function render(t) {
+        t = clamp(t, 0, DUR);
+        const r = RES(t);
+        const [cx, cy, s] = cam(t);
+        tf("w-cam", `translate(${SC.x - s * cx}px, ${SC.y - s * cy}px) scale(${s})`);
+        tf("w-par", `translate(${(SC.x - s * cx) * 0.55}px, ${(SC.y - s * cy) * 0.55}px) scale(${0.6 + s * 0.4})`);
+        tf("w-tilt", `rotateX(${tiltAt(t)}deg)`);
+        tf("w-plate", `scale(${1.03 + 0.03 * Math.cos(2 * Math.PI * t / DUR)}) translateX(${-12 * Math.sin(t / DUR * Math.PI)}px)`);   // slow drift, loops
+        // active station depth: the framed card at full size, the rest sit back
+        const rev = eio(seg(t, LAUNCH.t0 + 0.2, LAUNCH.t0 + 1.2)) * (1 - eio(seg(t, 79.2, DUR)));
+        for (const k of ORDER) { const d = Math.hypot(ST[k][0] - cx, ST[k][1] - cy) / 1100; const a = Math.max(clamp(1 - d), rev);
+          // only the framed card shows (nothing behind the presenter); all return for the reveal
+          $(k).style.opacity = Math.max(rev, eio(clamp(1 - Math.hypot(ST[k][0] - cx, ST[k][1] - cy) / 1000))); $(k).style.transform = `scale(${lerp(0.955, 1, a)})`; }
+        // path travelled (marigold) up to the coin's station
+        let lenNow = 0; for (let i = 1; i < ARR.length; i++) { if (t >= ARR[i]) lenNow = segLen[i]; else { lenNow = lerp(segLen[i - 1], segLen[i], eio(seg(t, ARR[i] - 0.62, ARR[i]))); break; } }
+        $("w-path2").style.strokeDashoffset = PL - lenNow * r;
+
+        // S1
+        const k49 = pop(t, C("n49") - 0.02, 18, 0.45);
+        tf("c1-num", `scale(${1 + 0.07 * Math.sin(Math.PI * clamp((t - C("n49") + 0.02) / 0.3)) })`);
+        $("c1-mk").style.backgroundSize = `${100 * eio(seg(t, C("stopped"), C("stopped") + 0.5)) * r}% 34%`;
+        const btnHot = seg(t, C("thinking"), C("thinking") + 0.2) * (1 - seg(t, C("wait"), C("wait") + 0.2));
+        $("c1-btn").style.background = btnHot > 0.5 ? "#fdecea" : "#fff";
+        tf("c1-btn", `scale(${1 + 0.06 * Math.sin(Math.PI * seg(t, C("yours"), C("yours") + 0.35))})`);
+        const st = pop(t, C("wait") - 0.06, 20, 0.5) * r;
+        setOp("c1-stamp", clamp(st * 3) ); tf("c1-stamp", `rotate(-8deg) scale(${lerp(2.2, 1, clamp(st))})`);
+        // S2
+        $("c2-line").setAttribute("d", pathTo(S26, Math.max(0.0001, ride26(t) * r)));
+        $("c2-area").setAttribute("d", areaTo(S26, Math.max(0.0001, ride26(t) * r), BOX2[3]));
+        setOp("c2-hi", seg(t, R26.t0 + 0.15, R26.t0 + 0.45) * r);
+        const kb = pop(t, C("pct14"), 15, 0.55) * r; setOp("c2-badge", clamp(kb * 2)); tf("c2-badge", `scale(${kb})`);
+        setOp("c2-last", seg(t, R26.t1 - 0.1, R26.t1 + 0.25) * r);
+        setOp("c2-red", seg(t, C("red") - 0.05, C("red") + 0.2) * r);
+        $("c2-sip").style.background = t >= C("red") - 0.05 && r > 0.5 ? "#fdecea" : "#eef0f4";
+        const glow = seg(t, C("stopping"), C("safe")) * (1 - seg(t, C("yet") - 0.3, C("yet"))) * r;
+        $("c2-stop").style.boxShadow = `0 0 ${40 * glow}px ${10 * glow}px rgba(181,71,58,${0.35 * glow})`;
+        $("c2-stop").style.background = glow > 0.3 ? "#b5473a" : "#fff"; $("c2-stop").style.color = glow > 0.3 ? "#fff" : "#b5473a";
+        // S3
+        tf("c3-num", `scale(${1 + 0.07 * Math.sin(Math.PI * clamp((t - C("n63") + 0.02) / 0.3))})`);
+        const kbar = eio(seg(t, C("started") - 0.1, C("started") + 0.6)) * r;
+        $("c3-b1").style.width = 560 * kbar + "px"; $("c3-b2").style.width = 560 * 49.68 / 63.26 * kbar + "px";
+        const kr = pop(t, C("started") + 0.45, 14, 0.6) * r; setOp("c3-rec", clamp(kr * 2)); tf("c3-rec", `scale(${kr})`);
+        // S4
+        const ka = pop(t, C("tenk") - 0.05, 14, 0.6) * r; setOp("c4-amt", clamp(ka * 2)); tf("c4-amt", `scale(${ka})`);
+        const tagB = pop(t, C("p80") - 0.1, 12, 0.5) * r; setOp("c4-tagB", clamp(tagB * 2)); tf("c4-tagB", `translateY(${(1 - tagB) * -80}px) rotate(${(1 - tagB) * 14}deg)`);
+        for (let i = 0; i < 5; i++) {
+          const ta = C("at") + 0.85 + i * 0.2, tb = C("same") + 0.8 + i * 0.2;
+          const da = eout(seg(t, ta, ta + 0.28)) * r, db = eout(seg(t, tb, tb + 0.28)) * r;
+          const ea = $("c4-a" + i), eb = $("c4-b" + i);
+          ea.style.top = lerp(290, BLK(i), da) + "px"; ea.style.opacity = i < 4 ? clamp(da * 4) : 0;
+          eb.style.top = lerp(290, BLK(i), db) + "px"; eb.style.opacity = clamp(db * 4);
+        }
+        const la = pop(t, C("u100") - 0.02, 14, 0.55) * r; setOp("c4-lA", clamp(la * 2)); tf("c4-lA", `scale(${la})`);
+        Object.assign($("c4-lA").style, { left: "164px", top: "652px" });
+        const lb = pop(t, C("u125") - 0.02, 14, 0.55) * r; setOp("c4-lB", clamp(lb * 2)); tf("c4-lB", `scale(${lb})`);
+        Object.assign($("c4-lB").style, { left: "624px", top: "652px" });
+        const sw = t - (C("sale") - 0.3); const sale = sw > 0 ? r : 0;
+        setOp("c4-sale", sale); tf("c4-sale", `rotate(${sw > 0 ? 28 * Math.exp(-3 * sw) * Math.cos(9 * sw) : 0}deg)`);
+        setOp("c4-saleTxt", seg(t, C("sale"), C("sale") + 0.3) * r);
+        // S5
+        for (let i = 0; i < 6; i++) { const tt = i === 0 ? C("six") : TT[i - 1]; const k = seg(t, tt, tt + 0.25) * r;
+          $("c5-t" + i).style.background = k > 0.5 ? "#f1efea" : "#eef3fb"; $("c5-u" + i).style.color = k > 0.5 ? "#a49f95" : "#00357a";
+          $("c5-x" + i).style.width = 230 * eout(k) + "px"; }
+        const kt = pop(t, C("u750") - 0.02, 16, 0.5) * r; setOp("c5-total", clamp(kt * 2)); tf("c5-total", `scale(${kt})`);
+        // S6
+        $("c6-p").textContent = t >= C("b100") - 0.05 && r > 0.5 ? "Rs 100" : "Rs 80";
+        $("c6-p").style.color = t >= C("b100") - 0.05 && r > 0.5 ? "#0e9a49" : "#b5473a";
+        setOp("c6-eq", seg(t, C("worth") - 0.4, C("worth")) * r);
+        const kv = seg(t, C("r75k") - 0.1, C("r75k") + 0.9) * r; setOp("c6-val", clamp(kv * 4));
+        $("c6-val").textContent = "Rs " + (Math.round(75000 * eout(kv) / 100) * 100).toLocaleString("en-IN");
+        setOp("c6-l1", seg(t, C("r75k"), C("r75k") + 0.3) * r); $("c6-b1").style.width = 780 * eout(seg(t, C("r75k"), C("r75k") + 0.7)) * r + "px";
+        setOp("c6-l2", seg(t, C("r60k") - 0.1, C("r60k") + 0.2) * r); $("c6-b2").style.width = 624 * eout(seg(t, C("r60k"), C("r60k") + 0.6)) * r + "px";
+        const kg = pop(t, C("heldback"), 14, 0.55) * r; setOp("c6-gap", clamp(kg * 2)); tf("c6-gap", `scale(${kg})`);
+        $("c6-mk").style.backgroundSize = `${100 * eio(seg(t, C("heldback") + 0.25, C("heldback") + 0.7)) * r}% 34%`;
+        // S7
+        const u20 = ride20(t) * r;
+        $("c7-line").setAttribute("d", pathTo(S20, Math.max(0.0001, u20))); $("c7-area").setAttribute("d", areaTo(S20, Math.max(0.0001, u20), BOX7[3]));
+        setOp("c7-old", seg(t, R20.t0, R20.t0 + 0.4) * r); setOp("c7-oldl", seg(t, R20.t0 + 0.1, R20.t0 + 0.5) * r);
+        const k40 = pop(t, C("pct40"), 15, 0.55) * r; setOp("c7-badge", clamp(k40 * 2)); tf("c7-badge", `scale(${k40})`);
+        const kbk = pop(t, C("oldhigh"), 15, 0.55) * r; setOp("c7-back", clamp(kbk * 2)); tf("c7-back", `scale(${kbk})`);
+        $("c7-old").setAttribute("stroke", t > C("oldhigh") && t < C("oldhigh") + 0.5 && r > 0.5 ? "#0e9a49" : "#608396");
+        for (let j = 0; j < 3; j++) { const kd = pop(t, C("kept") + 0.2 + j * 0.25, 16, 0.5) * r; setOp("c7-d" + j, clamp(kd * 2));
+          $("c7-d" + j).setAttribute("r", 14 * kd + 4 * Math.max(0, Math.sin((t - C("lowest")) * 7)) * seg(t, C("lowest"), C("lowest") + 0.2) * r); }
+        setOp("c7-buys", seg(t, C("lowest") - 0.1, C("lowest") + 0.3) * r);
+        // S8
+        const TK = [C("one"), C("two"), C("falling")];
+        for (let i = 0; i < 3; i++) { const k = seg(t, TK[i] + 0.02, TK[i] + 0.2) * r; const good = i < 2;
+          $("c8-b" + i).style.background = k > 0.5 ? (good ? "#0e9a49" : "#b5473a") : "#fff"; $("c8-b" + i).style.borderColor = k > 0.5 ? (good ? "#0e9a49" : "#b5473a") : "#bdb9ac";
+          setOp("c8-m" + i, k); tf("c8-m" + i, `scale(${lerp(0.4, 1, pop(t, TK[i] + 0.02, 18, 0.5))})`); }
+        $("c8-strike").style.width = 480 * eout(seg(t, C("noreason") - 0.15, C("noreason") + 0.3)) * r + "px";
+        setOp("c8-no", seg(t, C("noreason"), C("noreason") + 0.3) * r);
+        // S9 (the coin is the knob)
+        const kp = (t >= SLIDE.t0 ? spring(t - SLIDE.t0, 11, 0.7) : 0) * r;
+        $("c9-fill").style.width = lerp(150, 700, clamp(kp)) + "px"; setOp("c9-fill", clamp(kp * 3) * 0.9);
+        setOp("c9-pause", lerp(0.35, 1, clamp(kp))); $("c9-pause").style.color = kp > 0.5 ? "#0e9a49" : "#00357a";
+        setOp("c9-cancel", lerp(1, 0.45, clamp(kp)));
+        $("c9-strike").style.width = 210 * eout(seg(t, C("cancelling"), C("cancelling") + 0.35)) * r + "px";
+        setOp("c9-txt", seg(t, C("pause") + 0.4, C("pause") + 0.8) * r);
+        // S10
+        const press = Math.sin(Math.PI * seg(t, C("friend") - 0.08, C("friend") + 0.16));
+        tf("c10-btn", `scale(${1 - 0.06 * press})`);
+
+        // coin (+ squash on contacts, stretch in flight, halo on the reveal)
+        const [x, y, air, sc] = coinAt(t);
+        let sx = 1, sy = 1;
+        for (const ct of CONTACTS) { const d = t - ct; if (d >= -0.001 && d < 0.18) { const k = Math.sin(Math.PI * d / 0.18); sx = 1 + 0.24 * k; sy = 1 - 0.2 * k; } }
+        if (air) { sx *= 0.93; sy *= 1.08; }
+        const sink = SINK.map(([a, b]) => seg(t, a, b));
+        let op = 1;
+        if (t >= SINK[0][0] && t < NEW1) op = 1 - sink[0];
+        if (t >= SINK[1][0] && t < NEW2) op = 1 - sink[1];
+        let cxw = x, cyw = y + 40 * Math.max(sink[0] * (t < NEW1 ? 1 : 0), sink[1] * (t < NEW2 ? 1 : 0));
+        if (t >= NEW1 && t < C("same") - 0.32) { const k = pop(t, NEW1, 16, 0.55); op = clamp(k * 2); sx *= k; sy *= k; cxw = TOPC[0]; cyw = TOPC[1]; }
+        if (t >= NEW2 && t < C("stop6") - 0.6) { const k = pop(t, NEW2, 16, 0.55); op = clamp(k * 2); sx *= k; sy *= k; cxw = ON_B[0]; cyw = ON_B[1]; }
+        const wob = (t > C("shopping") && t < C("sale")) ? Math.sin((t - C("shopping")) * 18) * 8 : 0;
+        const big = 1 + 1.3 * eio(seg(t, LAUNCH.t0 + 0.3, LAUNCH.t0 + 1.3)) * (1 - eio(seg(t, 79.3, DUR)));
+        tf("coin", `translate(${cxw}px, ${cyw}px) rotate(${wob}deg) scale(${sx * sc * big}, ${sy * sc * big})`);
+        $("coin").style.opacity = op;
+        setOp("coin-halo", (big - 1) / 1.3);
+        tf("coin-shadow", `translate(${cxw}px, ${(air ? cyw + 46 + 30 : cyw + 40)}px) scale(${air ? 0.6 : 1})`);
+        $("coin-shadow").style.opacity = op * (air || t >= LAUNCH.t0 ? 0.0 : 1) * (sc > 1.2 ? 0 : 1);
+
+        // reveal: veil, brand and the compliance card (verbatim), then the dive home
+        const disc = seg(t, C("voEnd") + 0.15, C("voEnd") + 0.5) * (1 - seg(t, 79.05, 79.3));
+        setOp("w-veil", disc * 1); setOp("w-disc", disc); setOp("w-brand", seg(t, C("voEnd"), C("voEnd") + 0.4) * (1 - seg(t, 79.05, 79.3)));
+        tf("w-brand", `translateY(${(1 - eout(seg(t, C("voEnd"), C("voEnd") + 0.45))) * 30}px)`);
+      }
+      const clock = { t: 0 };
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo(clock, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(clock.t) }, 0);
+      render(0);
+      window.__worldRender = render;
+      window.__timelines["world"] = tl;
+    })();
+  </script>
+</template>
