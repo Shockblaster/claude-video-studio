@@ -38,6 +38,17 @@ lips meet at both corners in all 9 shapes, with no skin strip between them.
 - 3D / WebGL frames look right in the actual render (code can look fine and render wrong).
 - AI b-roll: watermark gone (crop sheet read), no garbled text, no uncanny faces.
 - Last frame to first frame: does the loop seam read as continuous?
+- Not a slide deck (`visual-grammar.md` "Video, not slides", added 2026-10-31): the 6 structural
+  checks pass (no opacity-toggled scene blocks, a visual thread > 60%, ≤ 2 text levels, not
+  Ken Burns only, ≥ 2 transition kinds with ≥ 1 with depth, one special moment). Ask of each
+  sheet frame: could it be a corporate slide unchanged?
+- Shot sizes: the camera reaches close-ups on the element being talked about; no world edge
+  shows at any shot peak; text lands after the camera arrives.
+- Contrast: grey-scale 3 frames with full text; no background area as bright as the letters.
+- Sizes: no text under 30 px on the 1080-wide frame (titles ≥ 100, body ≥ 44, labels ≥ 34,
+  disclaimer/credits ≥ 30). Measure from the HTML, not by eye.
+- Every company/product/place the VO names is on screen in its scene.
+- Grainy or soft gradients: zoom the encoded MP4 frame for banding.
 - Not just defects: look for clutter. Is anything busy sitting behind the presenter? Is any hand or prop
   cut at the frame or box edge? (A reviewer caught both on a real reel after the defect checks had
   passed.)

@@ -78,7 +78,8 @@ paid inference wrappers, Blender (too heavy for a small laptop), MusicGen (CC-BY
    Measure the real duration: the VO length sets the edit, not the other way round.
 5. **Beat sheet**: one row per 1.5-3 s: time, VO words, visual mode, graphic, SFX, music event, avatar pose (one
    pose per line, chosen to illustrate the line). Pick visuals from `references/visual-grammar.md`; change visual
-   mode every 5-7 s at least (re-hook).
+   mode every 5-7 s at least (re-hook). With it, write the one-line-each STYLE BRIEF (`visual-grammar.md` "The style
+   brief") and plan shot sizes, one new element per phrase, and the entity list (everything the VO names gets an image).
 6. **Build**: HyperFrames project (start from `templates/reel-project/` or the brand pack's starter). Registry
    blocks first, then the specialist skills above, hand-built last. Word timings: `scripts/pipeline/words.py`;
    named cues + captions: `scripts/pipeline/build_timing.py`. Avatar mouth cues: `scripts/mouth_rhubarb.py`
@@ -117,7 +118,7 @@ paid inference wrappers, Blender (too heavy for a small laptop), MusicGen (CC-BY
 | `references/toolchain.md` | Every tool: what it is, Mac + Windows install, commands, licences, licence traps |
 | `references/machine-limits.md` | Running heavy video work on a small laptop |
 | `references/retention.md` | Hook, retention grid, re-hooks, open loops, climax, loop endings, shareability, eyebrow-raisers, topic engine, scoring rubrics |
-| `references/visual-grammar.md` | Which graphic for which beat; the premium look (3D camera, morph, glow, depth, grain, type); pacing; effect ideas |
+| `references/visual-grammar.md` | Which graphic for which beat; the premium look; video-not-slides checks, shot sizes, one element per phrase, background menu, living type, minimum text sizes, style brief; pacing; effect ideas |
 | `references/sound.md` | Music licence ladder, SFX, VO processing, mix targets, beat sync |
 | `references/voice.md` | TTS options and how to pick; Hindi/Hinglish rules; voice bake-off; by-ear pick pages; Kokoro blending |
 | `references/avatars.md` | Cartoon avatar pipeline: pose library, face rig, mouths (Rhubarb + lip seal), placement, gestures, QC |

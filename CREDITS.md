@@ -39,5 +39,8 @@ official repositories.
 ## Ideas and techniques
 - Pace check, hook rules and several effect ideas were adapted from the free "MAKINGAIDOIT Free Reel Kit"
   (@makingaidoit).
+- The "Video, not slides" rules, shot-size camera, one-element-per-phrase, background menu, living type and minimum
+  text sizes in `references/visual-grammar.md` were adapted from bang-motion by Bang Tutorial
+  (https://github.com/bangtutorial/bang-motion, MIT, Copyright (c) 2026 Bang Tutorial), translated and condensed.
 - Disney's 12 principles of animation via `disney-animation-rule-skill`; timing and easing via
   `animation-principles`.

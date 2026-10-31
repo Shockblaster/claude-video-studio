@@ -58,6 +58,141 @@ reel, not defaults. Each must fit the brand's look (for a light, warm, rich bran
   read as unfinished to many audiences (learned on a finance brand: the team called austere
   layouts "empty"). Fill space with meaningful graphics, not noise.
 
+## Video, not slides (rules adapted from bang-motion, MIT, github.com/bangtutorial/bang-motion, 2026-10-31)
+
+Models build scenes like documents (title, explainer, proof), and the result reads as an
+autoplaying deck even when every element moves. These rules can be checked in the code and
+in frames. Failing one means rework before the user sees it.
+
+### Structural checks (look at the code, not the feeling)
+1. **No section toggling.** Three or more scenes that are separate blocks switched on and off
+   with opacity = a slide deck. Scenes change because the camera or the world moves (push,
+   pull back, whip, match cut, an object that becomes the next scene).
+2. **A visual thread.** One subject or one world stays on screen for more than 60% of the
+   reel (the avatar alone does not count: the graphic world behind it needs its own thread).
+   One picture + one sentence per scene, swapped each scene, is still a slideshow.
+3. **At most two text levels per scene**: one big number or sentence + one label. Eyebrow +
+   title + body = slide. A document, stamp or date block of 3 short lines or fewer counts as
+   an object.
+4. **Ken Burns is never the only motion.** Every second gets motion from the chosen
+   background language (below) or from an element acting.
+5. **Transitions vary.** At least two kinds per reel, at least one with depth (3D push,
+   card turning in from depth, an object with thickness passing the lens, rack focus).
+   Flat colour wipes at most twice. The same transition on every cut = template.
+6. **One special moment.** The most expensive effect (3D type pan, logo build, big morph)
+   is used once, maybe twice. Everywhere means nowhere.
+
+Frame test: could this frame be a corporate slide without changes? Does the eye know where
+to look within 0.2 s? With all text hidden, is the background calm but not dead?
+
+### Shot size: the camera goes to the element
+A breathing zoom of a few percent is a base layer and is nearly invisible. "Zoom in-out"
+means shot size: wide → medium close-up (target fills 1/3-1/2 of the frame) → close-up
+(target fills most of it) on whatever the VO is talking about now, then back out when the
+composition needs the whole frame.
+- Two tempos: shot changes (0.6-0.9 s, ease in-out) and a slow push while holding (sine).
+- A scene may be born in close-up at a cut and pull back. Text lands AFTER the camera arrives.
+- Never two shots of the same size in a row; never faster in-out than a reader can read.
+- Rig: one camera object {s, fx, fy} (scale + focus point in world coordinates), applied in
+  the seek-exact render; clamp the translate so the world's edge never shows, and make the
+  world larger than the frame (overscan). One scale system per wrapper: stack the breathing
+  inside the same function, never a second tween on the same element.
+- Captions, the disclaimer and any HUD sit on a layer OUTSIDE the camera rig.
+- Raster assets must be sharp at close-up scale (resolution ≥ scale x display size).
+
+### One new element per phrase (explaining scenes)
+- Each VO phrase ADDS one element; the old ones stay. A scene ends with 3-5 elements that
+  explain together: subject + proof (document, screen, clipping) + scale (number or a repeat
+  grid) + label/date stamp + a hand-drawn mark. Elements arrive in order: sentence → main
+  object → supporting detail, never reversed.
+- Scale by repetition: one icon multiplied into a grid (staggered back.out) lands harder than
+  the number alone. The number still shows.
+- New element = a small camera look (±200 px, 1-1.15x), not a cut.
+- **Every named entity appears.** Make a list from the script of every company, product,
+  place, event or person the VO names; each gets an image in its scene. Sources in order:
+  free-licence photos → official press/og:image (credited) → the user's own → a generated
+  image labelled illustrative for GENERIC places/objects only. Never a generated face of a
+  real person. Nothing found → ask the user before using a silhouette.
+
+### Backgrounds: never flat, never still, never louder than the text
+Pick ONE background motion per reel (two if the background changes between segments) and
+write it in the style brief:
+
+| # | Background motion | Feel |
+|---|---|---|
+| 1 | Textured ground + breathing camera + one slow tint/light shift | calm, expensive |
+| 2 | Large 2-3 colour gradient drifting/rotating (8-15 s) | soft, modern |
+| 3 | 2-4 floating blurred colour blobs (±60 px, 4-6 s) | friendly, light |
+| 4 | Living grain / paper texture (offset from t, never random) | printed, organic |
+| 5 | One light sweep per segment (not continuous) | premium |
+| 6 | Large geometric or logo shapes turning 20-40 s per turn, 2 parallax layers | brand |
+| 7 | Particles RISING slowly (dust, bubbles), opacity ≤ .35 in the text pocket | warm, alive |
+| 8 | Grid/pattern breathing (scale/opacity 1.0-1.04, 6-10 s), no scroll | precise |
+| 9 | Giant ghost text drifting behind (opacity .18-.25, one style per reel) | editorial |
+| 10 | Theme photo/illustration with Ken Burns + 2-layer parallax | narrative |
+| 11 | Horizontal streaks/lanes | ONLY for speed/flow topics, never two reels running |
+| 12 | Palette colour fields snapping on beats/objects (0.15-0.3 s) | pop, energetic |
+
+Surfaces (every background has ≥ 2 layers, colours from the palette, never pure black/white):
+horizon glow, diagonal duotone, light mesh of blobs, spotlight + tint, layered sky bands,
+texture over any of these (multiply/overlay .1-.3), grainy gradient (saturated gradient IN
+shapes + fine grain over everything).
+- **Text pocket contrast**: under text the background is ≤ 25% luminance (white text) or
+  ≥ 80% (dark text), never busy-medium. Busy background → a soft radial pocket behind the
+  text that appears with it. Test: grey-scale a frame at full title; no background area as
+  bright as the letters.
+- A background colour change needs a visible trigger (object covering the lens, wipe, push
+  into a colour field, cut on the beat), never an unmotivated cross-fade.
+- Grain: encode with `-crf 10-12 -tune grain` and check the MP4 (not the browser) for
+  banding; slightly bigger grain survives re-upload better.
+
+Object render family: one per reel (flat solid, flat + colour dots, soft clay 3D, glossy 3D,
+glass/glow orb, isometric, realistic metal, neon line, flat character illustration), or two
+only if the switch is the moment.
+
+### Living type
+- Sentence case, weight 500-600. All-caps heavy only for ONE emphasis scene.
+- Headlines, claims and short phrases get NO full stop by default. `?` only for a real
+  question. Decide punctuation once per reel.
+- Emphasis: one form per reel, chosen in the style brief: none (word by word dim → full,
+  size, pause, an icon beside the word), pill, underline drawing in, marker, thin box,
+  colour only, strike + replacement. Not on every sentence. Different from the last reel.
+- Two scenes in a row never share size AND entry direction AND position.
+- Text next to an object sits beside it, not forced to the centre over it.
+- Directional motion blur on every text entry/exit (SVG feGaussianBlur along the motion;
+  widen the filter region to x/y -70%, w/h 240% or the blur tail clips).
+- Asymmetric rhythm: in slow and firm (0.7-1.3 s, power4.out), out fast (0.35-0.55 s,
+  power2.in). Symmetric feels mechanical.
+- Titles clean (full white or ink + a thin shadow); glow belongs to objects, not headlines.
+
+### Minimum text sizes (1080-wide frame, before any safe-area scale)
+Titles ≥ 100 px · body/captions ≥ 44 px · labels, names, years ≥ 34 px · credits, sources
+and the disclaimer ≥ 30 px at opacity ≥ .6 · handwriting notes ≥ 48 px. Nothing under 30 px.
+If it does not fit, split it or cut it, never shrink it.
+
+### Props must look alive
+A ±10 px sway over 2 s reads as still. Minimum: ±22-28 px over 1.3-1.8 s (sine yoyo) + ±1.5°
+turn + slow scale 1 → 1.06 across the scene + a few px of x drift, with different phase and
+duration per object so nothing moves in unison.
+
+### Traps
+| Symptom | Cause | Fix |
+|---|---|---|
+| Element flashes for a frame before its entry | initial state set by a later tween, or a more specific CSS selector overrides `opacity:0` | initial `opacity:0` in CSS on the animated pieces themselves |
+| Counter box jitters in width | proportional digits | `font-variant-numeric: tabular-nums` + `min-width` |
+| Split text breaks or measures wrong | split before the font loaded | wait for `document.fonts.ready` |
+| A flat 3D ornament becomes a white line | full Y rotation of a flat object | sine wobble, never a full turn |
+| Text looks dull | stacked glows eat the contrast | drop the title glow |
+| Scrub/seek frames differ between runs | random or accumulated state in the render | everything a pure function of t |
+
+## The style brief (write before building; show with the beat sheet)
+One line each: background motion (# above) · surface · object render family · emphasis form ·
+signature motion (one repeated move that is the reel's identity, e.g. a drawing line, a card
+flip, a word roll) · transitions (which cuts get which, ≥ 1 with depth) · the special moment.
+Brand colours and fonts come from the brand pack and stay fixed. Each reel must differ from
+the previous reel of the same brand in at least TWO of: background motion, signature motion,
+emphasis form, transition set, special moment (each video beats the last).
+
 ## Pacing defaults (30 fps)
 
 - Cuts / visual changes: every 45-90 frames.
