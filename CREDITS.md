@@ -53,3 +53,19 @@ official repositories.
 | VSCO 2 CE, VCSL (Versilian Studios), FreePats, Karoryfer | via lemo-opuscar's asset release | CC0 1.0 | sampled instruments for `score.py` (downloaded, not bundled) |
 | Salamander Grand Piano V3 (Alexander Holm) | via lemo-opuscar | CC BY 3.0 | credit line written to `CREDITS_music.txt` whenever the piano is used |
 | MuldjordKit (Lars Muldjord), FreePats version | via lemo-opuscar | CC BY 4.0 | credit line written whenever the drum kit is used |
+
+## Contributor fork (2026-11)
+Ideas, measurements and scripts from a contributor's fork of this skill:
+`scripts/mouth_phonemes.py`, `scripts/study_motion.py` (+ the reference ranges in `references/reference-ranges.json`,
+summary statistics measured on 71 publicly posted reels; no reel media is included), `scripts/archive.py`,
+`scripts/photo_treat.py`, `scripts/tighten_vo.py`, `scripts/hf_get.py`, the faster-whisper engine in
+`scripts/pipeline/words.py`, the voice-over-bed gate in `beatmix.py`, Script DNA in `retention.md`, and the tool
+safety gate in `toolchain.md`. `motion_score.py`, `number_check.py` and the voice-first limiter were written here
+on top of them.
+
+| Source | Licence | How it is used |
+|---|---|---|
+| The Met Open Access, Smithsonian Open Access | CC0 | `archive.py` search and fetch, licence sidecar per image |
+| NASA Image and Video Library | generally not copyrighted (no endorsement implied) | `archive.py` |
+| Wikimedia Commons (public domain / CC0 files only) | per file | `archive.py` |
+| espeak-ng via phonemizer + espeakng-loader (Kokoro's dependencies) | GPL-3.0 (espeak-ng, called as a library at run time, not bundled) | phonemes for `mouth_phonemes.py` |

@@ -224,6 +224,24 @@ frames are only the start.
 - Music hits: cuts on the beat (`scripts/beatgrid.py` + `cuecheck.py`, `sound.md`), big moments on the
   downbeat of a bar; a camera move ARRIVES on the beat.
 
+## Rules from a contributor's fork (2026-11-02; measured on their 71 references + their owner's notes)
+- One strict system per film: one colour world, one type pair, and ONE design idea the fonts come from (their
+  postcard film: rubber stamp + postmark, so letterpress slab + typewriter, not a default sans).
+- About 2 lines of text on screen at once (their rejected reel had 9). Type is big with contrast: tiny connector
+  words beside huge key words; type lives in the scene (behind heads, around objects, built word by word).
+- A card is never a word on empty colour: lines fitted to one column by real font metrics, inside the safe zone.
+- Real material beats clean vectors where it fits: photos, paper, film, objects (texture measure 0.68 vs 0.12 in
+  their rejected reel). Photo plates: `scripts/photo_treat.py` (fringe blur, grade, vignette, grain, 12 fps dust
+  overlays); public-domain / CC0 images with licence sidecars: `scripts/archive.py search|fetch` (Met, Smithsonian,
+  NASA, Wikimedia Commons; LoC blocks scripted requests).
+- The idea becomes an object: don't show a chart if an object can carry the number.
+- Music edits (lyric / beat edits): type and shapes alone read as basic. They need a picture world (footage,
+  faces, objects), one concept that turns each line into something, and type that lives in the light (glow, blur
+  trails, behind the subject). Compositor examples: `templates/music-edit-examples/` when present.
+- Maps of India: Natural Earth 10m in its India point-of-view edition (public domain, correct northern
+  border). Never a default world outline (they
+  cut off the north). Compare with the Survey of India map before any public post.
+
 ## Before building, write the beat sheet
 
 | t (s) | VO | Visual mode | Graphic | Camera | SFX | Music |

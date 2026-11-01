@@ -92,7 +92,8 @@ skill), earshot's Gemini critique (uploads audio) and its forge search (needs li
 6. **Build**: HyperFrames project (start from `templates/reel-project/` or the brand pack's starter). Registry
    blocks first, then the specialist skills above, hand-built last. Word timings: `scripts/pipeline/words.py`;
    named cues + captions: `scripts/pipeline/build_timing.py`. Avatar mouth cues: `scripts/mouth_rhubarb.py`
-   (Rhubarb + the script text, all 9 shapes; `mouth_from_audio.py` only for no-script or Hindi). A new face rig
+   (Rhubarb + the script text, all 9 shapes; Hindi or no Rhubarb: `mouth_phonemes.py`, same arguments;
+   `mouth_from_audio.py` only with no script). A new face rig
    must pass its lip-seal gate (`references/avatars.md`). Avatar track: `scripts/pipeline/render_chunks.py`.
 7. **Draft render**: `npx hyperframes check --json`, fix all errors, then
    `npx hyperframes render --quality draft --workers 2` (long reels: segmented capture, foreground).
@@ -147,7 +148,12 @@ Scripts (run Python helpers with `python -I`):
 - `scripts/avatar_track.py` (placed corner avatar, one transparent track), `scripts/face_rig.py` +
   `face_paint.py` + `face_patch.py` (face rig, lip seal, long-hair patch), `scripts/pose_consistency.py`
   (pose library gate)
-- `scripts/mouth_rhubarb.py` (DEFAULT lip-sync), `scripts/mouth_from_audio.py` (language-free fallback)
+- `scripts/mouth_rhubarb.py` (DEFAULT lip-sync), `scripts/mouth_phonemes.py` (Hindi / no-Rhubarb, same arguments),
+  `scripts/mouth_from_audio.py` (no-script fallback)
+- `scripts/motion_score.py` + `study_motion.py` (how a reel moves vs 71 measured reference reels),
+  `scripts/number_check.py` (every spoken / on-screen number must be in sources.md)
+- `scripts/archive.py` (CC0 / public-domain images with licence sidecars), `scripts/photo_treat.py` (filmed-photo
+  look), `scripts/tighten_vo.py` (shorten long VO pauses), `scripts/hf_get.py` (SHA-256-verified model downloads)
 - `scripts/pipeline/`: `build_vo.py`, `words.py`, `build_timing.py`, `mix.py`, `sheets.py`, `render_chunks.py`,
   `scan_avatar.py`
 - `scripts/smoke_test.py` (proves the toolchain works; must print SMOKE PASS)

@@ -60,6 +60,29 @@ verified by our numbers yet, so re-rank with `performance.md`):
 - Hooks that show the payoff in frame one (a result, a price, a thing doing something
   surprising) beat hooks that only promise it.
 
+## 2b. Script DNA (from a contributor's fork, 2026-11-02 (40 + 31 hand-picked Instagram reels measured with OpenCV flow, Demucs and Whisper))
+Shapes, never lines to copy. Their reels: first word at 0.0 s in nearly all; median 177 words a minute.
+- **Hook shapes**: the whole story in one line (setup, turn, payoff: "rejected by Facebook, so he built a $19
+  billion startup and sold it to them"); before the success ("Before Rocky made $225 million, he was selling his
+  dog"); not X, it's Y; a huge claim traced to one thing; a scene in a place and year ("In 1915, Einstein was
+  losing a war against gravity"); this is an object ("This is the American dollar. Printed on it are four
+  words"); a place with a strange fact; a news number with a catch; a hard number in plain words; "look at this"
+  (point at the screen); start mid-conversation.
+- **The middle**: set up safety, then break it; a but / so chain (almost never "and then"); one hinge question;
+  contrast with the crowd ("While everyone's chasing X, they went the other way"); short fragments after long
+  lines ("Boring? Sure. Lucrative? Insanely."); an everyday analogy; a concrete human detail at the peak; every
+  number tied to something a person can picture ("more money than Greece makes").
+- **Endings**: a line that stays; the thesis restated sharper; a payoff planted in line one; a quiet fact; a
+  number as the last image; an open question; a series tease; a human invitation; a keyword comment CTA (good
+  for leads, weak as story).
+- **Rhythm**: phrase length varies about twice as much in their reels as in a flat TTS read (sd 1.5 vs 0.7); a
+  one-word line can stand alone ("Rejected.").
+- **Before writing, check**: a person, place or object in line 1? Could a stranger say the question after 3 s? A
+  concrete human detail near the peak? Does the ending work with no disclaimer or sell (regulated notes go on
+  screen separately, after it)? Is every number tied to something a person can picture?
+- Their owner's verdicts that generalise: a fact list is boring, a story needs a person, stakes and a turn
+  ("a father's dream" beat "an IPO data story"); keep reels about 30 s and hooked every second.
+
 ## 3. Re-hooks and pacing
 
 - Visual change every 1.5-3 s (cut, move, morph, new element). A full mode switch every
@@ -70,6 +93,13 @@ verified by our numbers yet, so re-rank with `performance.md`):
   pointing, a sound hit, a colour flip, a question on screen.
 - Captions on screen the whole time (most people watch muted), max 3-4 words per group,
   the key word highlighted.
+- Measured on 71 reference reels (fork, `scripts/motion_score.py`): the camera moves ~58% of the time (median),
+  ~9% of half-seconds are still, the first 3 s move ~1.15x the rest, and the picture changes (cut or transition)
+  ~6.5 times per 10 s, 89% of them hard cuts. Their owner called a reel with a new picture every 1.4 s
+  "boring" against ~0.7 s in references. A one-take avatar world with 0 cuts passed the motion
+  measures but had no picture changes: cut inside the world, not only camera moves.
+- Cuts land on the start of a spoken phrase far more than chance (23% vs 11.5%); clear cut-on-every-beat showed
+  in only 2 of 30 reels. Our beat grid is fitted to spoken anchor words, so both hold: phrase start AND beat.
 
 ## 4. Climax
 

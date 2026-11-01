@@ -93,6 +93,13 @@ soxr, librosa, torch-cpu). Grid and check tools run in the system Python with `-
 ## Voice processing
 - Compress the TTS first (beatmix: 3:1 at -24 dB, RMS-linked), THEN balance by RMS: music about 14 dB under the
   speaking voice (opuscar says ~10 dB; on phone speakers 12-16 keeps every word clear), +4 dB in gaps >= 0.5 s.
+- **Voice first**: beatmix's limiter (default on) holds music >= 10 dB and the SFX bus >= 6 dB under the voice in
+  every 0.1 s window where the voice speaks, only where they would cross it. Its gate in SOUND.md: voice over
+  everything else while speaking, median >= 10 dB, worst 5% >= 4 dB (`--gate-strict` exits 2 on a fail; 14 / 6 for
+  a voice-led story reel). On a 10 s avatar reel it moved 7.4 / -3.3 dB (ticks and a pop sat on words) to
+  12.4 / +5.1 at the same loudness; by ear the two mixes sounded alike, so it costs nothing.
+- Fewer, better sounds; each fits the object on screen (a stamp thuds, paper slides). Reference reels used about
+  3.4 effects per 10 s (rough measure). Make several clearly different scores for a film and pick by ear.
 - Names Kokoro gets wrong: force phonemes (`k.create(ipa, is_phonemes=True)`, a per-person lexicon). Every line read back by Whisper; the FINAL MIX too.
 
 ## Mix targets (measure on the exported MP4, never guess)

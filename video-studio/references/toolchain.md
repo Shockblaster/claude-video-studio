@@ -99,3 +99,21 @@ The skill was built on a 6 GB RAM laptop with an integrated GPU. What worked the
 - Mixkit music: allowed on social and ads, but never register it with Content ID.
 - Instagram's trending music library: personal accounts only. Business accounts get Meta Sound Collection.
 - Brand fonts (e.g. ITF FFL fonts): embedding in rendered video is usually fine, sharing the font files is not.
+- Licence reads (2026-11): CoTracker (non-commercial demo), Depth Anything V2 Base and Large (CC-BY-NC; only Small
+  is Apache-2.0), RMBG-2.0 (own gated licence), BBC Sound Effects (non-commercial), Voxtral TTS (CC-BY-NC). Sonniss
+  GDC bundles: fine inside videos, AI training forbidden. LTX-2 weights: community licence, read it first; Wan 2.2
+  is Apache-2.0.
+
+## Tool safety gate (before installing anything new)
+1. Licence allows commercial use, read from the actual licence file, for the code AND the weights.
+2. Official source, maintained, real community use. 3. Dependency scan (OSV) and a read of install scripts.
+4. Own environment, pinned versions, no auto-update. 5. Safetensors or safe loading, checksum recorded, telemetry
+off; big downloads through `scripts/hf_get.py` (SHA-256 checked; an interrupted hub download once left a
+zero-filled model file at its final name). 6. Measured on your machine: speed, peak RAM, disk. 7. Scored on known
+answers before it is trusted. 8. Losers deleted and written down so nobody retries them blindly.
+
+## Heavier local tools (measured on a 16 GB M-series Mac)
+ACE-Step 1.5 turbo music (30 s in ~50 s, peak 10.6 GB); Blender EEVEE paper dioramas (0.36 s/frame at 540x960);
+mlx-audio voices (Qwen3-TTS, Ming-3.0, VoxCPM2, Chatterbox; Apple-only runtime; lines made one by one drift in
+voice unless each is cloned from one reference clip); BiRefNet-lite ONNX cut-outs (224 MB, 6 s/image on CPU);
+Depth Anything V2 Small for 2.5D layers. On a 6 GB laptop use a cloud notebook for the first three.

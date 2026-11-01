@@ -94,3 +94,11 @@ Their flow, adapted (full version: `MY-STYLES.md` in the clone):
 3. One style frame with the real code, the original style's frame side by side on a local pick page.
 4. A 15-30 s demo with music and SFX (our beat pipeline), checked and fixed once.
 5. Keep it: write it into the brand pack as `style.md` (the brand's STYLE.md) + the demo + its source.
+
+## Two more house styles (beta)
+| Style | Good for | System |
+|---|---|---|
+| One-colour editorial | essays and explainers, an idea every ~2 s | one hue ground with a fine weave; true black-and-white cut-out objects with a hue-tinted shadow, 50-60% of the frame empty; condensed heavy key word built letter by letter (0.045 s) with tiny italic connectors around the object; block-dissolve between objects; 1.2%/s camera push |
+| Vox / paper collage | city / brand / history stories | sticker-edged cut-outs, printed photos with paper borders, paper grounds; stepped motion at 12 drawings/s with 1-3 px jitter while the camera moves on ones; tiny serif captions, huge type only 2-3 times a film; one colour ground per section |
+Material: `scripts/archive.py` (public domain / CC0) + `scripts/photo_treat.py`. Single objects read plainer than
+object combinations (scale jokes).

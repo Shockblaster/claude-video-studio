@@ -32,6 +32,18 @@ brand characters get a consistent stock voice, not a clone of a real person.
 - Always transcribe the TTS output back (video-analyzer `get_transcript` on an MP4 wrap)
   and compare with the script: wrong words show up immediately.
 - Speed 0.95-1.1. Faster for hooks, slower for the climax line.
+- Pace (fork, 48 reference reels): 2.6-3.3 words a second, median 2.95. Their owner called 3.09 with tight pauses
+  "too fast"; for proud or emotional stories about 2.75 w/s at the voice's natural speed, 0.2-0.46 s between
+  lines. NEVER speed a voice up to hit a length: cut words. Long pauses only: `scripts/tighten_vo.py in out --max .3`
+  shortens gaps over 0.3 s without touching words.
+- A take can stop early or clip its last word with exit 0 and no error: transcribe the last 7 s of every take
+  before anyone listens.
+- Whisper traps (fork's Jio reel): it splits numbers and acronyms ("30" ",000", "eye," "PO,"), hears "crore" as
+  "core" and adds "$" to bare amounts. Build captions from the script, and check phonemes before respelling a
+  word (espeak/Kokoro already say kɹɔːɹ; "karor" was worse). Never pass the script as Whisper's initial_prompt:
+  it repeats the sentence past the audio.
+- Acronyms as words in English scripts: "IPO", never "I.P.O." (the dots made it enunciate). Never respell a name
+  to help a voice ("Jee-oh" made it spell J-I-O): force phonemes instead (below).
 
 ## Kokoro voice blending (option for NEW voices; from the MAKINGAIDOIT kit, 2026-10-29)
 kokoro-onnx can mix voice styles, which gives more options than the 54 stock voices:

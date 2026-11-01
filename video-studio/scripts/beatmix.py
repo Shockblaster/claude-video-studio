@@ -78,6 +78,46 @@ def smooth(g, sec=0.08):
     return np.convolve(np.pad(g, (n, n), mode="edge"), k, mode="same")[n:-n]
 
 
+def _win_db(x, n):
+    k = len(x) // n
+    r = np.sqrt(np.mean(np.square(x[:k * n]).reshape(k, n, -1), axis=(1, 2)))
+    return 20 * np.log10(r + 1e-9), k
+
+
+def voice_first(vo, bus, gap_db, win=0.1, speak_db=-18.0):
+    """Gain on `bus` so that, in every window where the voice speaks (within speak_db of its loudest window),
+    the bus sits >= gap_db under the voice. 10 ms look-ahead, 30 ms attack / 150 ms release smoothing."""
+    n = int(win * SR)
+    v, k = _win_db(vo, n)
+    b, _ = _win_db(bus, n)
+    if k == 0:
+        return bus, 0
+    on = v > v.max() + speak_db
+    cut = np.where(on, np.minimum(0.0, (v - gap_db) - b), 0.0)
+    hits = int((cut < -0.5).sum())
+    if not hits:
+        return bus, 0
+    cut = np.minimum(cut, np.concatenate([cut[1:], [0.0]]))       # look-ahead one window: no late duck
+    g = np.repeat(cut, n)
+    g = np.concatenate([g, np.zeros(len(bus) - len(g))])
+    g = np.minimum(smooth(g, 0.03), smooth(g, 0.15))               # fast down, slower back up
+    return (bus * (10 ** (g / 20))[:, None]).astype(np.float32), hits
+
+
+def voice_gate(vo, bed, win=0.2, speak_db=-20.0):
+    """Measured voice over everything else, only while the voice speaks."""
+    n = int(win * SR)
+    v, k = _win_db(vo, n)
+    b, _ = _win_db(bed, n)
+    on = v > v.max() + speak_db
+    d = (v - b)[on]
+    if not len(d):
+        return {"median": 99.0, "p5": 99.0, "worst": []}
+    order = np.argsort(v - b + np.where(on, 0, 1e3))[:5]
+    return {"median": round(float(np.median(d)), 1), "p5": round(float(np.percentile(d, 5)), 1),
+            "worst": [{"t": round(i * win, 1), "db": round(float(v[i] - b[i]), 1)} for i in order if on[i]]}
+
+
 def loudnorm_mux(video, mix_wav, out, target=-14.0, tp=-1.5):
     f = f"loudnorm=I={target}:TP={tp}:LRA=11:print_format=json"
     r = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(mix_wav), "-af", f, "-f", "null", "-"], capture_output=True, text=True)
@@ -116,6 +156,13 @@ def main():
     ap.add_argument("--ambience", help="a room tone / ambience bed (opuscar's third layer); mono is decorrelated to stereo")
     ap.add_argument("--amb-under", type=float, default=26.0, help="ambience RMS under the speaking voice (dB)")
     ap.add_argument("--amb-width", type=float, default=0.15, help="ambience L/R correlation after decorrelation (0 = widest)")
+    ap.add_argument("--voice-first", type=int, default=1, help="1 = hold music and SFX under the speaking voice (default)")
+    ap.add_argument("--music-gap", type=float, default=10.0, help="voice-first: music at least this far under the voice (dB)")
+    ap.add_argument("--sfx-gap", type=float, default=6.0, help="voice-first: SFX bus at least this far under the voice (dB)")
+    ap.add_argument("--gate-median", type=float, default=10.0,
+                    help="voice gate: median voice-over-bed while speaking (dB). The fork's owner wanted 14 by ear")
+    ap.add_argument("--gate-worst", type=float, default=4.0, help="voice gate: worst 5%% of speaking windows (dB); fork: 6")
+    ap.add_argument("--gate-strict", action="store_true", help="exit 2 when the voice gate fails")
     ap.add_argument("--video")
     ap.add_argument("--mux")
     a = ap.parse_args()
@@ -237,6 +284,16 @@ def main():
             used.append({"t": round(t, 3), "role": role_name, "sound": take.get("id") or take["file"], "start": round(st, 3),
                          "gain_db": round(gdb, 1), "bed_lufs": None if bed is None else round(bed, 1), "desc": c.get("desc", "")})
 
+    # ---- voice first (2026-11-02, from a friend's fork: "music and effects must never overshadow the voice").
+    # While the voice speaks, music and the SFX bus are each held at least --music-gap / --sfx-gap dB under the
+    # voice in that 0.1 s window. Only where they would cross it; nothing is ducked in gaps or between lines.
+    lim_log = []
+    if a.voice_first:
+        music, nm_ = voice_first(vo, music, a.music_gap); sfx, ns_ = voice_first(vo, sfx, a.sfx_gap)
+        lim_log = [f"Voice-first limiter: music held {a.music_gap:.0f} dB under the speaking voice in {nm_} windows, "
+                   f"SFX {a.sfx_gap:.0f} dB under it in {ns_} windows (0.1 s each)."]
+    gate = voice_gate(vo, music + amb + sfx)
+
     mix = vo + music + amb + sfx
     pk = np.abs(mix).max()
     if pk > 0.98:
@@ -253,13 +310,20 @@ def main():
            f"SFX: earshot kit preset '{a.preset}' (bank {lock.get('bank')}).", "", "## Placements"]
     rep += [f"- {u['t']:.3f}s {u['role']:12} {u['sound']} start {u['start']:.3f}s, {u['gain_db']:+.1f} dB"
             + (f" (bed {u['bed_lufs']} LUFS)" if u["bed_lufs"] is not None else "") + f"  {u['desc']}" for u in used]
-    rep += log + ["", "## Check these 5 with headphones"] + [f"- {u['t']:.2f}s {u['role']} ({u['desc']})" for u in sorted(risk, key=lambda u: u["t"])]
+    g_ok = gate["median"] >= a.gate_median and gate["p5"] >= a.gate_worst
+    rep += log + lim_log + ["", "## Voice gate", f"Voice over everything else while speaking (0.2 s windows): median {gate['median']:+.1f} dB, "
+                            f"worst 5% {gate['p5']:+.1f} dB. Target {a.gate_median:g} and {a.gate_worst:g}. "
+                            + ("PASS" if g_ok else "FAIL: lower the music (--under) or the SFX, or turn --voice-first on")]
+    rep += [f"- {w['t']:.1f}s voice {w['db']:+.1f} dB over the bed" for w in gate["worst"]]
+    rep += ["", "## Check these 5 with headphones"] + [f"- {u['t']:.2f}s {u['role']} ({u['desc']})" for u in sorted(risk, key=lambda u: u["t"])]
     if a.video and a.mux:
         i, p = loudnorm_mux(a.video, out / "mix.wav", a.mux)
         rep += ["", f"Muxed {a.mux}: integrated {i:.1f} LUFS, true peak {p:.1f} dBTP"]
     (out / "SOUND.md").write_text("\n".join(rep), encoding="utf-8")
     print(json.dumps({"ok": True, "placed": len(used), "skipped_roles": [l for l in log], "vo_rms": round(float(vo_rms), 1),
+                      "voice_gate": {"median": gate["median"], "p5": gate["p5"], "pass": bool(g_ok)},
                       "out": str(out / "mix.wav"), "mux": a.mux}))
+    return 0 if g_ok or not a.gate_strict else 2
 
 
 if __name__ == "__main__":

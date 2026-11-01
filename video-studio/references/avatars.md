@@ -96,8 +96,13 @@ Two live routes:
   - Reviewers called the loudness-only mouths "sloppy" and the Rhubarb + script version "so much better". On
     one reel the loudness method opened wide (D) 78 times in 74 s and never used G or H; Rhubarb opened wide
     17 times.
-- Fallback: `scripts/mouth_from_audio.py` (loudness + brightness, any language, X-F only) for no script or Hindi.
-  Rhubarb `-r phonetic` is the other Hindi option.
+- **Hindi, or no Rhubarb** (e.g. Apple Silicon without Rosetta: Rhubarb 1.14 is x86_64 only on macOS):
+  `scripts/mouth_phonemes.py`, same arguments as mouth_rhubarb.py plus `--lang hi`. espeak-ng phonemes of the script
+  (Kokoro's own phonemizer), timed by faster-whisper word times snapped to the audio; all 9 shapes. Tested: a Hindi
+  line found all 6 lip closures (m, b, ph); an English clip vs Rhubarb matched mouth openness within one step 80% of
+  the time and closures 90%. Sounds inside a word are placed by weight, not heard: check A closures on M/B/P words.
+  Both scripts read either starts.json format (`starts` + `lines`, or `lines: [{start, text}]`).
+- Fallback: `scripts/mouth_from_audio.py` (loudness + brightness, any language, X-F only) only with no script.
 - Do not judge mouth timing by Whisper word times: they can run ~0.4 s late after a pause. Check the waveform.
 - Mouth QC is a 3-4x ZOOM of the lips per shape. Face contact sheets are too small to show a 3-5 px strip at the
   corners.

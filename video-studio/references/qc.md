@@ -34,6 +34,16 @@ Reading time (opuscar DIRECTOR.md §7): text that animates in holds at least let
 a caption at least 1.8 s and never shorter than its spoken line + 0.6 s; a title card at least 4 s.
 `npx hyperframes check` reports `line_unread`: fix every one or say why it is deliberate.
 
+Motion vs references (2026-11-02): `python -I scripts/motion_score.py out.mp4 [--format creator-edit]` (~11 s for
+10 s). Flags camera stillness, dead half-seconds, a weak hook, few picture changes, low effective fps against 71
+measured reference reels. A flag means look, not fail (it cannot judge taste). A one-take avatar test: 1 flag, 0 picture
+changes per 10 s (refs median 6.5).
+
+Voice over the bed (2026-11-02): `beatmix.py` prints a voice gate in SOUND.md: voice over everything else while
+speaking, median >= 10 dB and worst 5% >= 4 dB (the fork's owner wanted 14 / 6 by ear; `--gate-median 14
+--gate-worst 6` for a voice-led story reel). The voice-first limiter (default on) holds music 10 dB and SFX 6 dB
+under the speaking voice only where they would cross it.
+
 Avatar mouth: a new face rig must print `"lip_seal_ok": true`. READ its `mouth_zoom.png`: the
 lips meet at both corners in all 9 shapes, with no skin strip between them.
 
@@ -75,7 +85,11 @@ lips meet at both corners in all 9 shapes, with no skin strip between them.
 
 ## 3. Facts and rights
 - Every on-screen number and claim is in `sources.md` with a link, or labelled
-  illustrative.
+  illustrative. Gate: `python -I scripts/number_check.py --sources sources.md --script vo/script.txt --html
+  hf/index.html` exits 0 (spoken + visible numbers vs sources.md; 0-10 and lines containing "illustrative" pass;
+  spelled-out amounts are listed for an eye check).
+- Facts from several sources that disagree: say only what every source supports ("70 times", "over Rs 30,000
+  crore"), never the most dramatic figure (fork's Jio reel: 67.15x intraday vs 70.5x final).
 - Every music track, SFX pack, font, image and clip is in `licences.md`.
 - Brand pack compliance items done (disclaimer slot, banned phrases).
 

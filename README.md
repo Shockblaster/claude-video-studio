@@ -24,6 +24,11 @@ one-take camera worlds, real-data charts) and screen walkthroughs, on a 6 GB lap
   motion skills).
 - **16:9 screen walkthroughs** of a web app: real screenshots, rings, cursor, zooms, chapter lane, voice.
 - **Voice-over** with free local TTS (Kokoro), word timings, captions and a measured -14 LUFS mix.
+- **Hindi lip-sync without Rhubarb** (`mouth_phonemes.py`, espeak phonemes + word timings, all 9 mouth shapes), and
+  a voice-first mix that keeps music and effects under every spoken word.
+- **Checks before anyone sees it**: how the reel moves against 71 measured reference reels (`motion_score.py`),
+  every spoken or on-screen number traced to `sources.md` (`number_check.py`), and free public-domain / CC0 images
+  with a licence record for each (`archive.py`).
 - **Beat-synced reels**: one beat grid fitted to the key spoken words, every cut and pop snapped onto it and
   gated to within one frame, an original score written on that grid with real CC0 / CC BY instruments, and
   professional sound effects placed the way launch films place them ([earshot](https://github.com/Leonxlnx/earshot),

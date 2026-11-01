@@ -2,7 +2,7 @@
 """Prove the video toolchain still works end to end. Prints SMOKE PASS or SMOKE FAIL.
 
 Steps: Kokoro TTS (Hindi) -> mouth cues -> avatar rig project -> hyperframes check ->
-draft render -> qc_reel.py -> beat grid -> cue check; with the optional audio tools (setup/setup-audio.*):
+draft render -> qc_reel.py -> Hindi phoneme lip-sync -> number gate -> motion score -> beat grid -> cue check; with the optional audio tools (setup/setup-audio.*):
 original score -> earshot SFX mix + mux. About 2-4 minutes on a 6 GB laptop.
 
   python -I smoke_test.py [--workdir <VIDEO_STUDIO_HOME>/smoke] [--keep]
@@ -77,6 +77,18 @@ def main():
                                     "--output", str(mp4)], cwd=proj)
     ok &= good
     good, out = step("qc_reel", [sys.executable, "-I", str(HERE / "qc_reel.py"), str(mp4), "--min", "1"])
+    ok &= good
+    # Hindi phoneme lip-sync (no Rhubarb needed), the numbers gate, the motion score
+    (wd / "hi.txt").write_text("नमस्ते, यह एक स्मोक टेस्ट है।", encoding="utf-8")
+    good, _ = step("mouth_phonemes (hindi)", [sys.executable, "-X", "utf8", "-I", str(HERE / "mouth_phonemes.py"), "--wav", str(wd / "vo.wav"),
+                                              "--text", str(wd / "hi.txt"), "--lang", "hi", "--model", "base", "-o", str(wd / "mouth_hi.json")])
+    ok &= good
+    (wd / "sources.md").write_text("- 26,459 crore (AMFI)\n", encoding="utf-8")
+    (wd / "script.txt").write_text("Rs 26459 crore.\nStep 3.\nAn illustrative 40,000.\n", encoding="utf-8")
+    good, _ = step("number_check (sourced numbers pass)", [sys.executable, "-I", str(HERE / "number_check.py"), "--sources",
+                                                           str(wd / "sources.md"), "--script", str(wd / "script.txt")])
+    ok &= good
+    good, _ = step("motion_score", [sys.executable, "-I", str(HERE / "motion_score.py"), str(mp4), "--out", str(wd / "motion")])
     ok &= good
     # beat pipeline: grid -> cue check (no extra installs); score + earshot mix when the audio tools are set up
     cues = wd / "cues.json"

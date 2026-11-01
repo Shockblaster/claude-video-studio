@@ -105,11 +105,13 @@ def main():
     ap.add_argument("--recognizer", default="pocketSphinx", help="pocketSphinx (English) or phonetic (other languages)")
     a = ap.parse_args()
     if not RHUBARB.exists():
-        sys.exit(f"Rhubarb not found at {RHUBARB}; fall back to mouth_from_audio.py")
+        sys.exit(f"Rhubarb not found at {RHUBARB}; use mouth_phonemes.py (same arguments)")
     cues = []
     if a.lines_dir:
         S = json.loads(pathlib.Path(a.starts).read_text())
         total = S["total"]
+        if "starts" not in S:                        # build_vo.py format: lines = [{i, start, dur, text}]
+            S = {"starts": [x["start"] for x in S["lines"]], "lines": [x["text"] for x in S["lines"]]}
         for i, (st, text) in enumerate(zip(S["starts"], S["lines"]), 1):
             wav = pathlib.Path(a.lines_dir) / f"{i:02d}.wav"
             off = st - trim_offset(wav)              # line-file time 0 lands here in vo.wav
