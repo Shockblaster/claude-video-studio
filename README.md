@@ -23,8 +23,13 @@ one-take camera worlds, real-data charts) and screen walkthroughs, on a 6 GB lap
 - **Data charts** from real sources, count-ups, stamps, morphs, 3D openers (via the routed HyperFrames and
   motion skills).
 - **16:9 screen walkthroughs** of a web app: real screenshots, rings, cursor, zooms, chapter lane, voice.
-- **Voice-over** with free local TTS (Kokoro), word timings, captions, a licensed music bed, CC0 sound effects
-  and a measured -14 LUFS mix.
+- **Voice-over** with free local TTS (Kokoro), word timings, captions and a measured -14 LUFS mix.
+- **Beat-synced reels**: one beat grid fitted to the key spoken words, every cut and pop snapped onto it and
+  gated to within one frame, an original score written on that grid with real CC0 / CC BY instruments, and
+  professional sound effects placed the way launch films place them ([earshot](https://github.com/Leonxlnx/earshot),
+  optional install).
+- **Cinematic and 3D looks** from a menu of 66 named film styles ([lemo-opuscar](https://github.com/lemomo-ai/lemo-opuscar))
+  and an engine chooser (HyperFrames, three.js with depth of field, AI b-roll).
 - Optional AI b-roll and art through your own ChatGPT / Gemini accounts (no API keys).
 
 Everything renders locally with [HyperFrames](https://github.com/heygen-com/hyperframes) (HTML + GSAP/Three.js,
@@ -56,6 +61,13 @@ The setup script:
 
 Set `VIDEO_STUDIO_HOME` before running it to use another folder. Pass `--no-skills` / `-NoSkills` to skip the
 third-party skills.
+
+**Optional: beat sync and pro sound** (about 3 GB more: earshot with CPU torch, the lemo-opuscar sampler and
+1.3 GB of CC0 / CC BY instrument samples):
+```bash
+sh setup/setup-audio.sh                      # macOS / Linux; add --with-models for earshot's 1.1 GB listening models
+powershell -ExecutionPolicy Bypass -File setup\setup-audio.ps1   # Windows; -WithModels likewise
+```
 
 Optional MCP servers, added in Claude Code, unlock more:
 - the **Playwright MCP**: generate art and AI clips in your own logged-in ChatGPT/Gemini, and capture app

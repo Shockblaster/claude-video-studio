@@ -49,6 +49,28 @@ Install or update one: `npx skills add <repo> --skill <name> -g -y -a claude-cod
 | Pace check | `python -I scripts/pace_check.py reel.mp4 --mask <avatar box> --mask <caption box>` | same | Lists still stretches over 1 s and still frames in the first 2 s. ~1 min for 80 s |
 | edge-tts (optional) | `pip install edge-tts` | same | Microsoft neural voices incl. Indian English. GREY licence (unofficial use of a consumer read-aloud service): only if the user accepts the risk |
 | Parakeet ASR (optional) | `npx hyperframes models install parakeet` | same | English/European only |
+| **Beat + sound pipeline (2026-11-01)** | `scripts/beatgrid.py`, `cuecheck.py` (system Python `-I`); `score.py`, `beatmix.py` (AUDIO venv) | See `sound.md` "The beat pipeline". Grid fit on a 97 s track ~20 s; score 10 s ~11 s; mix + mux ~2 min first run (kit render), cached after |
+| AUDIO venv | `<VIDEO_STUDIO_HOME>/tools/earshot/.venv` (setup/setup-audio.*) | Python 3.12 + earshot 0.4.0 (editable), torch 2.15 CPU, librosa 1.0, soxr. Always run with `-X utf8` (cp1252 console) |
+| earshot 0.4.0 (MIT) | `<VIDEO_STUDIO_HOME>/tools/earshot` (clone @591fa3e) | `sfx list/render/check`, `kit init/render/check/audition`, `measure`: no models. `critique/timeline/sheet/describe/match`: CLAP + AST models (1.1 GB, `.cache/hf` in the tool folder; `doctor --fetch`). MCP server exists (`pip install -e .[mcp]`), not registered |
+| lemo-opuscar (MIT code, CC BY demos) | `<VIDEO_STUDIO_HOME>/tools/lemo-opuscar` (clone @bebbbe1, reference only: never build inside it) | Sampler + pluck + sfx (`core/audio`), three.js post (`core/three/post.js`), CRT pass, readcheck, 66 styles (`references/film-styles.md`). Sample libraries in `core/audio/instruments/` (1.28 GB): vsco2ce, vcsl, freepats (CC0), salamander (CC BY 3.0). Fetch more: `python -X utf8 -I <fetch logic from tools/fetch.sh>` (the .sh needs a POSIX python3 path; on Windows run its Python block, see lessons 2026-11-01). Karoryfer (erhu, jazz bass, alto sax) not fetched |
+
+## Engine chooser: which tool makes which kind of video (2026-11-01)
+
+Compare before every new kind of video; the user plans 3D and cinematic work. Times measured on this laptop.
+
+| Need | Best engine here | Quality ceiling | Render cost (a 6 GB laptop) | Licence |
+|---|---|---|---|---|
+| Reels: kinetic type, cards, charts, one-take worlds, avatar compositing | **HyperFrames** (HTML + GSAP render(t)) | high; seek-exact; registry blocks | 10 s 1080x1920 draft ≈ 1.5 min (`--workers 2`) | Apache 2.0 |
+| 3D shots inside a reel (product hero, diorama, isometric world, title) | **three.js inside HyperFrames** (`/title-sequence-3d`, `/threejs-webgl`) + opuscar's `core/three/post.js` ideas: physical DOF, GTAO, bloom, colour grade, 2x supersample, a Poly Haven HDRI at low intensity + soft area lights | near "rendered" look with post; hardware WebGL via ANGLE/D3D11 | heavy: budget 2-4x a 2D reel; render 2x then downsample only for hero shots | MIT / CC0 assets |
+| Full cinematic film in one named style (66 styles) | **opuscar's method in our stack**: their `STYLE.md` + techniques, our HyperFrames render, our beat grid | their gallery is the bar (`references/film-styles.md`) | as above | MIT code; demos CC BY (never copy) |
+| Real-looking b-roll (people, places, nature) | **Gemini Omni via Playwright** (`ai-broll.md`) | photoreal, 8 s clips, watermark scrub | ~4 clips/day, user presses Send | platform terms; AI label when it looks real |
+| Still plates, character art, poses | **ChatGPT image gen via Playwright** | best character consistency we have | 60 s between sends | user's account |
+| Rigged true 3D characters | not here (Blender rendering too heavy; VRM only after 2D is proven) | n/a | n/a | n/a |
+| Editing existing footage | mcp-video (Kinocut) | n/a | fast | MIT |
+| Music | `scripts/score.py` (original, beat-locked) > platform library > Mixkit (seeked by `beatgrid.py`) | real sampled instruments | 10 s ≈ 11 s | CC0 / CC BY credit lines |
+| SFX | earshot bank via `beatmix.py` | pro-measured placement | seconds | MIT |
+Rule: pick the cheapest engine that reaches the look; one 3D hero shot inside a 2D reel beats a whole 3D reel
+that renders for an hour. Every new engine or style gets a row here and a line in `lessons.md`.
 
 ## Machine limits (measure YOUR machine and write the numbers here)
 

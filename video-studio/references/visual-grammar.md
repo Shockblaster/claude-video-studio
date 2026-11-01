@@ -193,14 +193,36 @@ Brand colours and fonts come from the brand pack and stay fixed. Each reel must 
 the previous reel of the same brand in at least TWO of: background motion, signature motion,
 emphasis form, transition set, special moment (each video beats the last).
 
+## Directing rules from lemo-opuscar (MIT, github.com/lemomo-ai/lemo-opuscar, DIRECTOR.md, adopted 2026-11-01)
+A film is judged in this order: **sound, rhythm, camera, directing** (performance, staging, emotional arc). Good
+frames are only the start.
+- **Benchmark first**: 1-2 reference works for this topic and look; write what to learn (composition, pacing,
+  camera grammar, colour logic, score structure) and what NOT to take (characters, designs, melodies, shots,
+  logos, fonts). It lifts quality more than any rule here.
+- **Story**: one subject, one goal, one turn; hook in the first 3 s; an ending that echoes the opening (and
+  loops); **one native move** at the emotional peak, a moment only this medium can do (a fold that becomes a
+  transition, ink that blooms into the next scene); cut the extras.
+- **Treatment before building**: three candidate structures and the choice; logline; shot list with framing,
+  angle, move, duration and WHY; second-by-second beat sheet; cue map (tempo, bar grid, which beat every cut,
+  action and caption lands on); sound design table.
+- **Rhythm**: the music grid comes first; vary the pace (one clear acceleration or deceleration, one breath); one
+  action, one sound, one cut, but not a cut on every beat; pace for the viewer, not the clock.
+- **Camera**: at least four different camera moves and real framing changes per reel (push, pull, pan, parallax,
+  focus pull, frame within a frame); one signature shot; transitions made from the medium, one consistent grammar;
+  at key moments the subject fills a third of the frame height or more.
+- **Performance**: anticipation, action, follow-through; blend poses with easing, never switch inside an `if`
+  (one-frame comic pops excepted); check every expression at final size, eyebrows first.
+- **Not the demo / not the last reel**: compare structure, opening, signature shot, camera path, score shape,
+  ending with the reference and with the previous reel; at least four of six differ.
+
 ## Pacing defaults (30 fps)
 
 - Cuts / visual changes: every 45-90 frames.
 - Text on screen: at least 0.25 s per word to be readable; captions 2-4 words per group.
 - Holds after a key number: 15-30 frames.
 - Transitions: 8-15 frames; shader transitions up to 20.
-- Music hits: cuts on the beat (use `/sound-effects` beat grid), big moments on the
-  downbeat of a bar.
+- Music hits: cuts on the beat (`scripts/beatgrid.py` + `cuecheck.py`, `sound.md`), big moments on the
+  downbeat of a bar; a camera move ARRIVES on the beat.
 
 ## Before building, write the beat sheet
 

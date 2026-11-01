@@ -2,7 +2,8 @@
 """Prove the video toolchain still works end to end. Prints SMOKE PASS or SMOKE FAIL.
 
 Steps: Kokoro TTS (Hindi) -> mouth cues -> avatar rig project -> hyperframes check ->
-draft render -> qc_reel.py. About 1-2 minutes on the 6 GB laptop.
+draft render -> qc_reel.py -> beat grid -> cue check; with the optional audio tools (setup/setup-audio.*):
+original score -> earshot SFX mix + mux. About 2-4 minutes on a 6 GB laptop.
 
   python -I smoke_test.py [--workdir <VIDEO_STUDIO_HOME>/smoke] [--keep]
 """
@@ -39,7 +40,16 @@ def main():
     a = ap.parse_args()
     wd = pathlib.Path(a.workdir)
     if wd.exists():
-        shutil.rmtree(wd)
+        # Windows can keep a handle on the last run's folder for a while (WinError 32): retry, then use a fresh folder
+        import time
+        for _ in range(5):
+            try:
+                shutil.rmtree(wd); break
+            except PermissionError:
+                time.sleep(3)
+        else:
+            wd = wd.with_name(wd.name + "_" + time.strftime("%H%M%S"))
+            print(f"[note] old workdir locked, using {wd}")
     wd.mkdir(parents=True)
     proj = wd / "proj"
     ok = True
@@ -68,6 +78,29 @@ def main():
     ok &= good
     good, out = step("qc_reel", [sys.executable, "-I", str(HERE / "qc_reel.py"), str(mp4), "--min", "1"])
     ok &= good
+    # beat pipeline: grid -> cue check (no extra installs); score + earshot mix when the audio tools are set up
+    cues = wd / "cues.json"
+    cues.write_text(json.dumps([{"t": 0.5, "type": "pop", "lock": "beat", "role": "pop"},
+                                {"t": 1.0, "type": "reveal", "lock": "anchor", "role": "hit"},
+                                {"t": 1.6, "type": "move", "lock": "word", "role": "whoosh.short"}]))
+    tl = wd / "timeline.json"
+    good, _ = step("beat grid (fit to cues)", [sys.executable, "-I", str(HERE / "beatgrid.py"), "--fit-bpm", "100", "130",
+                                               "--cues", str(cues), "--dur", "2.5", "-o", str(tl)])
+    ok &= good
+    good, _ = step("cue check (exit 0)", [sys.executable, "-I", str(HERE / "cuecheck.py"), "--timeline", str(tl), "--cues", str(cues)])
+    ok &= good
+    AP = _paths.audio_python()
+    if AP != sys.executable and (_paths.opuscar_dir() / "core" / "audio" / "instruments" / "index.json").exists():
+        good, _ = step("score (sampler, real instruments)", [AP, "-X", "utf8", str(HERE / "score.py"), "--timeline", str(tl),
+                                                              "--cues", str(cues), "--out", str(wd / "music"), "--key", "C"])
+        ok &= good
+        good, _ = step("beat mix (earshot kit + mux)", [AP, "-X", "utf8", str(HERE / "beatmix.py"), "--vo", str(wd / "vo.wav"),
+                                                        "--music", str(wd / "music" / "music.wav"), "--cues", str(cues),
+                                                        "--timeline", str(tl), "--key", "C", "--out", str(wd / "sound"),
+                                                        "--dur", "2.5", "--video", str(mp4), "--mux", str(wd / "beat.mp4")], timeout=900)
+        ok &= good
+    else:
+        print("[skip] score + beat mix: optional audio tools not set up (setup/setup-audio.sh or .ps1)")
     if not a.keep and ok:
         shutil.rmtree(wd, ignore_errors=True)
     print("SMOKE PASS" if ok else "SMOKE FAIL")

@@ -86,6 +86,22 @@ def sound_python():
     return os.environ.get("VIDEO_STUDIO_SOUND_PY") or _config().get("sound_python") or sys.executable
 
 
+def audio_python():
+    """Python of the AUDIO venv (earshot + soxr + torch-cpu) for score.py / beatmix.py: VIDEO_STUDIO_AUDIO_PY, config
+    'audio_python', or <home>/tools/earshot/.venv. Falls back to this interpreter."""
+    v = os.environ.get("VIDEO_STUDIO_AUDIO_PY") or _config().get("audio_python")
+    if v:
+        return v
+    d = home() / "tools" / "earshot" / ".venv"
+    exe = d / ("Scripts/python.exe" if IS_WIN else "bin/python")
+    return str(exe) if exe.exists() else sys.executable
+
+
+def opuscar_dir():
+    """lemo-opuscar reference clone (sampler + sample libraries): LEMO_OPUSCAR_DIR, config 'opuscar', or <home>/tools/lemo-opuscar."""
+    return _lookup("LEMO_OPUSCAR_DIR", "opuscar", home() / "tools" / "lemo-opuscar")
+
+
 if __name__ == "__main__":
     print(json.dumps({"home": str(home()), "rhubarb": str(rhubarb()), "rhubarb_exists": rhubarb().exists(),
                       "mediapipe_models": str(mediapipe_models()), "fonts": str(fonts_dir()), "npx": npx(),

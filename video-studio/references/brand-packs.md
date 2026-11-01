@@ -30,3 +30,11 @@ per-video HyperFrames projects, voice bake-offs and renders. Its `CLAUDE.md` say
 4. Voice bake-off (`voice.md`) and, if wanted, characters (`avatars.md`).
 5. Seed `topics.md` with 10-20 scored topics and `hooks.md` with the archetypes that fit.
 6. Copy `templates/brand-pack-template/SKILL.template.md` to the new pack as `SKILL.md` and fill it in.
+
+## A brand's own film style (from lemo-opuscar MY-STYLES.md, 2026-11-01)
+When a brand wants a recognisable look (a personal brand, a launch series), make its style the opuscar way
+(`references/film-styles.md` "Make a style your own"): start from a library style or a blank page, sort the
+changes into safe / changes its character / can't change, show a side-by-side style frame on a pick page, make a
+15-30 s beat-synced demo, and keep it in the pack as `style.md` + demo + source. The pack also keeps the brand's
+sound: score style, key and tempo range for `scripts/score.py`, and the earshot kit preset (with any role swaps)
+for `scripts/beatmix.py`, so every reel of the brand sounds like the brand.

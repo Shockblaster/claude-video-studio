@@ -163,3 +163,14 @@ into the right reference file.
   Full-page shots are ~15 px narrower (scrollbar); measure boxes in the same state the image was taken.
 - 1600 px of UI in a 1120 px frame reads small: zoom close-ups ~1.22x, and align a box wider than the window LEFT.
 - Whisper-check every voice line before building.
+
+## Beat sync and professional sound (2026-11-01)
+- One beat grid drives everything. Mark every cue as `beat` (can move: snap it), `anchor` (a spoken word that must
+  also land on a beat: fit the grid to these) or `word` (never moves). A test reel: 14 events, mean 3 ms off.
+- Beat trackers misread intros (librosa said 92 bpm on a 140 bpm track); fit one uniform grid over the whole track.
+- Write the score ON the grid (hits, rests before them, a resolving last bar) and the sync is exact by construction.
+- Judge the mix with measurements, not taste: earshot's critique against 7 pro launch films first flagged a thin sub
+  and a mono image. Fixes that got it to 18/18: subs added after the low-end balance, mid/side width on the music,
+  music ~10 dB (not 14) under the voice, a decorrelated room-tone layer, a limiter after loudnorm (AAC overs).
+- Windows: `python -I` ignores PYTHONIOENCODING; use `-X utf8`.
+

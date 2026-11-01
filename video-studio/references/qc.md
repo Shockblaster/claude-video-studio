@@ -20,6 +20,20 @@ Pace (added 2026-10-29, from the MAKINGAIDOIT Free Reel Kit):
 - Example from a real 80 s reel: 17 stretches over 1 s, including the hook's first ~1.2 s and two
   2.4-2.9 s holds. Each next video should beat its predecessor's number.
 
+Beat sync (added 2026-11-01): `python -I scripts/cuecheck.py --timeline timeline.json --cues cues.json` exits 0:
+every `beat` and `anchor` event within 1 frame of a beat (test reel: 13 events, mean 4 ms, max 30 ms).
+Print its table into the review notes; a reel with music and no timeline.json is not done.
+
+Sound (opuscar TECHNIQUE.md §8 + earshot): `sound/SOUND.md` exists and lists every placement; the 5 "check with
+headphones" timestamps go to the user; Whisper reads the FINAL MIX back (music and SFX must not eat a word; an
+unknown name is the only allowed miss); `ffmpeg -i out.mp4 -vf blackdetect=d=0.05:pix_th=0.05 -an -f null -`
+prints nothing; music low end (20-120 Hz) about -3 dB vs the rest. Optional when nothing else runs:
+`earshot critique out.mp4` (scorecard vs pro launch films; evidence, not a verdict).
+
+Reading time (opuscar DIRECTOR.md §7): text that animates in holds at least letters ÷ 15 + 1.5 s once settled;
+a caption at least 1.8 s and never shorter than its spoken line + 0.6 s; a title card at least 4 s.
+`npx hyperframes check` reports `line_unread`: fix every one or say why it is deliberate.
+
 Avatar mouth: a new face rig must print `"lip_seal_ok": true`. READ its `mouth_zoom.png`: the
 lips meet at both corners in all 9 shapes, with no skin strip between them.
 
@@ -36,6 +50,12 @@ lips meet at both corners in all 9 shapes, with no skin strip between them.
 - Hindi: conjuncts and matras render correctly (Mukta or Noto Sans Devanagari loaded via
   `@font-face`); no tofu boxes.
 - 3D / WebGL frames look right in the actual render (code can look fine and render wrong).
+- Key actions (a pose pop, a card landing, a flip, a hand-over): a 0.2 s frame strip, enlarged.
+- Expressions at their FINAL placed size, brows above all ("worried" and "angry" are one brow flip apart).
+- Opuscar's frequent failures: subject too small or against the frame edge; colour on the same colour; a gag or
+  reveal too fast to read; blank frames in a transition; a timed effect that loses its subject after the camera
+  moves (one world-to-screen function).
+- One fix round: everything the checks find is fixed together, then checked once more.
 - AI b-roll: watermark gone (crop sheet read), no garbled text, no uncanny faces.
 - Last frame to first frame: does the loop seam read as continuous?
 - Not a slide deck (`visual-grammar.md` "Video, not slides", added 2026-10-31): the 6 structural

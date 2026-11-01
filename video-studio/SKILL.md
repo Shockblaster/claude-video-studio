@@ -46,7 +46,9 @@ down concrete upgrades per aspect. After delivery, record the new baseline in `l
 | One-take story explainer (camera follows a hero element) | `/explainer-engaging`, or `templates/reel-project/` (a proven 80 s one-take world with a talking avatar) | |
 | Hype / teaser, beat-locked kinetic type | `/explainer-high-energy` | |
 | Motion b-roll over a talking head | `/motion-broll` | One morphing shape, timed to words |
-| Sound pass: cue list, beat grid, CC0 SFX, loudness | `/sound-effects` + `scripts/pipeline/mix.py` | Bundled CC0 library, measured mix |
+| Beat-synced reel: grid, cue check, original score, pro SFX mix | `scripts/beatgrid.py`, `cuecheck.py`, `score.py`, `beatmix.py` (`references/sound.md`) | DEFAULT for every reel with music. Score = real CC0/CC BY instruments via lemo-opuscar's sampler; SFX = earshot's audited bank placed by its launch preset. Optional install: `setup/setup-audio.*` |
+| Sound pass with the bundled CC0 kit / a finished edit | `/sound-effects` + `scripts/pipeline/mix.py` | Older route, still fine |
+| A named film style (66: glass product, tilt-shift, paper pop-up, spy titles, dark keynote...), cinematic or 3D | `references/film-styles.md` + `toolchain.md` "Engine chooser" | Styles and techniques from lemo-opuscar (MIT); their demo films are CC BY, never copied |
 | Cut a subject out of footage | `/object-separation` | SAM 2 local; pick the smallest model on a small machine |
 | Make a 16:9 into a clean 9:16 upload | `/reel-export` | |
 | Port Remotion / Lottie / Three.js / AE work | `/remotion-to-hyperframes` | |
@@ -62,21 +64,28 @@ down concrete upgrades per aspect. After delivery, record the new baseline in `l
 
 Not used on purpose (do not add without asking): Remotion skills (company licence above 3 employees), the
 OpenMontage toolchain (AGPL + paid providers; only its MIT `svg-character-animation` instruction skill),
-paid inference wrappers, Blender (too heavy for a small laptop), MusicGen (CC-BY-NC).
+paid inference wrappers, Blender (too heavy for a small laptop), MusicGen (CC-BY-NC), the lemo-opuscar plugin
+itself (its rules, sampler and style index are used from a reference clone; the plugin would compete with this
+skill), earshot's Gemini critique (uploads audio) and its forge search (needs licensed reference recordings).
 
 ## The pipeline (every video)
 
 1. **Brief**: topic, audience, one-line promise, platform, language, length. Every number that will appear on
    screen gets a source in `sources.md` before scripting. No source, no number (illustrative values are labelled
    "illustrative" on screen).
-2. **Hook + structure**: pick a hook archetype and fill the retention grid (`references/retention.md`). Write
-   three hook options; choose by the rubric there.
+2. **Benchmark + hook + structure**: name 1-2 reference works that set the bar for THIS topic and look (what to
+   learn / what not to take). Pick a hook archetype, fill the retention grid (`references/retention.md`), write
+   three hook options and three candidate structures; choose by the rubric. A strong look (cinematic, 3D, a brand
+   style): choose from `references/film-styles.md` and the engine from `toolchain.md` "Engine chooser".
 3. **Script**: spoken lines with beat timestamps. Hindi: Devanagari, acronyms spelled phonetically for TTS
    (`references/voice.md`). One light de-AI pass on on-screen text.
 4. **Voice**: record or TTS (`scripts/pipeline/build_vo.py`: per line, placed at measured starts). Tricky words,
    voice speed and music are picked BY EAR by the user on a pick page (`templates/reel-project/pick.html`).
    Measure the real duration: the VO length sets the edit, not the other way round.
-5. **Beat sheet**: one row per 1.5-3 s: time, VO words, visual mode, graphic, SFX, music event, avatar pose (one
+5. **Beat grid + beat sheet** (`references/sound.md` "The beat pipeline"): `cues.json` (every cut, pop, landing
+   and key word with its lock and SFX role), `scripts/beatgrid.py` (grid fitted to the anchor words, or a stock
+   track seeked onto the cues), `scripts/cuecheck.py --snap` (every movable event onto a beat). Then the beat
+   sheet, plus a sound design table (ambience, foley, music state per section), one row per 1.5-3 s: time, VO words, visual mode, graphic, SFX, music event, avatar pose (one
    pose per line, chosen to illustrate the line). Pick visuals from `references/visual-grammar.md`; change visual
    mode every 5-7 s at least (re-hook). With it, write the one-line-each STYLE BRIEF (`visual-grammar.md` "The style
    brief") and plan shot sizes, one new element per phrase, and the entity list (everything the VO names gets an image).
@@ -91,7 +100,9 @@ paid inference wrappers, Blender (too heavy for a small laptop), MusicGen (CC-BY
    `python -I scripts/pace_check.py out.mp4 --mask <avatar box>`, READ EVERY FRAME as contact sheets
    (`scripts/pipeline/sheets.py`) plus the automatic avatar scan (`scripts/pipeline/scan_avatar.py`), watch the
    first 3 s and the climax frame by frame, self-score. Nothing goes to the user before this passes.
-9. **Sound**: `scripts/pipeline/mix.py` (beat-aligned music, ducking, CC0 SFX, -14 LUFS masters A and B).
+9. **Sound**: `scripts/score.py` (original score on the grid) + `scripts/beatmix.py` (earshot SFX on every cue,
+   stop-downs, ambience, -14 LUFS mux); `scripts/cuecheck.py` must exit 0; Whisper on the final mix. Older route:
+   `scripts/pipeline/mix.py`. Optional judge (run alone): `earshot critique out.mp4`.
 10. **User review on a phone**, then the delivery render (`--quality delivery`) and a final QC run. Hand over: MP4
     (with and without music), cover frame, caption text, music credit line, `sources.md`, `licences.md`.
 11. **Self-improvement** (below).
@@ -119,7 +130,8 @@ paid inference wrappers, Blender (too heavy for a small laptop), MusicGen (CC-BY
 | `references/machine-limits.md` | Running heavy video work on a small laptop |
 | `references/retention.md` | Hook, retention grid, re-hooks, open loops, climax, loop endings, shareability, eyebrow-raisers, topic engine, scoring rubrics |
 | `references/visual-grammar.md` | Which graphic for which beat; the premium look; video-not-slides checks, shot sizes, one element per phrase, background menu, living type, minimum text sizes, style brief; pacing; effect ideas |
-| `references/sound.md` | Music licence ladder, SFX, VO processing, mix targets, beat sync |
+| `references/sound.md` | The beat pipeline (grid, cues, score, mix), music licence ladder, pro SFX roles, sound design rules, mix targets |
+| `references/film-styles.md` | 66 named film styles (lemo-opuscar) by category, engine and use, "make a style your own" |
 | `references/voice.md` | TTS options and how to pick; Hindi/Hinglish rules; voice bake-off; by-ear pick pages; Kokoro blending |
 | `references/avatars.md` | Cartoon avatar pipeline: pose library, face rig, mouths (Rhubarb + lip seal), placement, gestures, QC |
 | `references/browser-ai.md` | ChatGPT image gen + Gemini Omni through the Playwright MCP: queue, rate limits, saving, QA |

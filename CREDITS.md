@@ -44,3 +44,12 @@ official repositories.
   (https://github.com/bangtutorial/bang-motion, MIT, Copyright (c) 2026 Bang Tutorial), translated and condensed.
 - Disney's 12 principles of animation via `disney-animation-rule-skill`; timing and easing via
   `animation-principles`.
+
+## Beat sync, scores and sound effects (2026-11-01)
+| Project | Repository | Licence | How it is used |
+|---|---|---|---|
+| lemo-opuscar (LemoLab) | https://github.com/lemomo-ai/lemo-opuscar | MIT (code, docs); CC BY 4.0 (demo films) | Directing rules adapted into `visual-grammar.md`, `qc.md`, `sound.md`; its sampler drives `scripts/score.py` from a reference clone; its 66 styles indexed in `references/film-styles.md` (names and techniques only; no demo films included) |
+| earshot (Leon Lin) | https://github.com/Leonxlnx/earshot | MIT | Installed by `setup/setup-audio.*`; its SFX bank and `launch` kit drive `scripts/beatmix.py`; `earshot critique` is the optional sound judge |
+| VSCO 2 CE, VCSL (Versilian Studios), FreePats, Karoryfer | via lemo-opuscar's asset release | CC0 1.0 | sampled instruments for `score.py` (downloaded, not bundled) |
+| Salamander Grand Piano V3 (Alexander Holm) | via lemo-opuscar | CC BY 3.0 | credit line written to `CREDITS_music.txt` whenever the piano is used |
+| MuldjordKit (Lars Muldjord), FreePats version | via lemo-opuscar | CC BY 4.0 | credit line written whenever the drum kit is used |
